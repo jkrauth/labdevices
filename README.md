@@ -1,5 +1,14 @@
 Python package providing the software drivers for the devices in the RCS lab.
 
+### Included Devices
+
+- Allied Vision Manta
+- AML Stepper Motor Drive
+- ANDO Spectrum Analyzer
+- Newport
+- Applied Motion Products
+- Stanford Research Systems
+
 ### Installation
 
 We use a new conda environment to work with lab devices.
@@ -41,4 +50,6 @@ If there have been updates in the repo you then have to upgrade the installation
 ```
 $ pip install --upgrade .
 ```
+
+### Add a new driver to the module
 
