@@ -37,7 +37,7 @@ class DG645:
     }
     
     
-    def __init__(self, tcp, port, timeout = 0.1):    
+    def __init__(self, tcp: str, port: int, timeout: float = 0.1):    
         self.tcp = tcp
         self.port = port
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -70,7 +70,7 @@ class DG645:
         return respons.rstrip()
         
     @property
-    def idn(self):
+    def idn(self) -> str:
         idn = self.query('*IDN?')
         return idn
     
