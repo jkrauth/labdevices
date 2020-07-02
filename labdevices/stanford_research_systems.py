@@ -53,14 +53,14 @@ class DG645:
         self.s.connect((self.tcp, self.port))
         time.sleep(0.2)
         print('bla')
-        print('Connected to delay generator 645 instance:\n', self.idn)
+        print(f'Connected to:\n    {self.idn}')
 
     def close(self):
-        time.sleep(1)
+        print(f'Close connection with:\n    {self.idn}')
         self.s.close()
-        print("Close connection")
+
   
-    def write(self, cmd: str):
+    def write(self, cmd: str) -> None:
         # Add write termination character and encode
         termination_char = self.DEFAULTS['write_termination']
         cmd += termination_char
