@@ -37,7 +37,13 @@ class DG645:
     }
     
     
-    def __init__(self, tcp: str, port: int, timeout: float = 0.1):    
+    def __init__(self, tcp: str, port: int, timeout: float = 0.010):
+        """
+        Arguments:
+        tcp - IP address of device
+        port - port of device
+        timeout - time in seconds before recv() gives a timeout error
+        """
         self.tcp = tcp
         self.port = port
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,14 +51,14 @@ class DG645:
 
     def initialize(self):
         self.s.connect((self.tcp, self.port))
-        #self.s.send(b'*IDN?\n')
-        #self.idn = self.s.recv(256)
+        time.sleep(0.2)
+        print('bla')
         print('Connected to delay generator 645 instance:\n', self.idn)
 
     def close(self):
         time.sleep(1)
         self.s.close()
-        print("Close connection to:\n", self.idn)
+        print("Close connection")
   
     def write(self, cmd: str):
         # Add write termination character and encode
@@ -131,7 +137,7 @@ if __name__ == "__main__":
     dg.initialize()
     respons = dg.getDelay(2)
     print(respons)
-    dg.setDelay(2, 0.004061726)
+    dg.setDelay(2, 0.007061726)
     respons = dg.getDelay(2)
     print(respons)
     dg.close()
