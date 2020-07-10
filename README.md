@@ -53,3 +53,36 @@ $ pip install --upgrade .
 
 ### Add a new driver to the module
 
+still to be explained
+
+### Troubleshooting
+
+##### Ubuntu
+
+If you want to read a VISA address with the pyvisa package and you get the following message
+
+> Found a device whose serial number cannot be read. The partial VISA resource name is: USB0::2733::443::???::2::INSTR
+
+the issue is related to the permissions regarding the [udev rules](https://www.thegeekdiary.com/beginners-guide-to-udev-in-linux/). If you don't have permission to write on USB devices you will not be able to communicate properly with the device. To solve this problem  (see also [here](http://manpages.ubuntu.com/manpages/bionic/man3/Device::USB::FAQ.3pm.html)) you have to create a group with the name *usb* by
+
+```
+addgroup --system usb
+```
+
+Next, add your user to that group by
+
+```
+sudo adduser <user> usb
+```
+
+where <user> is your ubuntu username, which is also shown in the terminal at the beginning of each line.
+
+Create a file in /etc/udev/rules.d/ with the name `50-myusb.rules` (if it does not exist yet) and add the following line
+
+```
+SUBSYSTEM=="usb", MODE="0666", GROUP="usb"
+```
+
+After restarting the PC check that you are part of the usb group by typing `groups` into the terminal.
+
+The communication with the usb device should now work.
