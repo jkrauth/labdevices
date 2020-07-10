@@ -20,21 +20,22 @@ from time import sleep
 
 class SMC100:
 
-    DEFAULTS = {'write_termination': '\r\n',
-                'read_termination': '\r\n',
-                'encoding': 'ascii',
-                'baudrate': 921600,
-                'timeout': 100,
-                'parity': visa.constants.Parity.none,
-                'data_bits': 8,
-                'stop_bits': visa.constants.StopBits.one,
-                'flow_control': visa.constants.VI_ASRL_FLOW_XON_XOFF,
-                'query_termination': '?',
+    DEFAULTS = {
+        'write_termination': '\r\n',
+        'read_termination': '\r\n',
+        'encoding': 'ascii',
+        'baudrate': 921600,
+        'timeout': 100,
+        'parity': visa.constants.Parity.none,
+        'data_bits': 8,
+        'stop_bits': visa.constants.StopBits.one,
+        'flow_control': visa.constants.VI_ASRL_FLOW_XON_XOFF,
+        'query_termination': '?',
     }
 
     device = None
     
-    def __init__(self,port,dev_number):
+    def __init__(self, port, dev_number):
         self.port = port # e.g.: '/dev/ttyUSB0'
         self.dev_number = dev_number # e.g.: 1
 
@@ -43,18 +44,21 @@ class SMC100:
         port = 'ASRL'+self.port+'::INSTR'
         rm = visa.ResourceManager('@py')
         #rm_list = rm.list_resources()
-        self.device = rm.open_resource(port,
-                                       timeout=self.DEFAULTS['timeout'],
-                                       encoding=self.DEFAULTS['encoding'],
-                                       parity=self.DEFAULTS['parity'],
-                                       baud_rate=self.DEFAULTS['baudrate'],
-                                       data_bits=self.DEFAULTS['data_bits'],
-                                       stop_bits=self.DEFAULTS['stop_bits'],
-                                       flow_control=self.DEFAULTS['flow_control'],
-                                       write_termination=self.DEFAULTS['write_termination'],
-                                       read_termination=self.DEFAULTS['read_termination'])
-        sleep(0.5) # make sure connection is established before doing anything else
+        self.device = rm.open_resource(
+            port,
+            timeout=self.DEFAULTS['timeout'],
+            encoding=self.DEFAULTS['encoding'],
+            parity=self.DEFAULTS['parity'],
+            baud_rate=self.DEFAULTS['baudrate'],
+            data_bits=self.DEFAULTS['data_bits'],
+            stop_bits=self.DEFAULTS['stop_bits'],
+            flow_control=self.DEFAULTS['flow_control'],
+            write_termination=self.DEFAULTS['write_termination'],
+            read_termination=self.DEFAULTS['read_termination']
+        )
 
+        # make sure connection is established before doing anything else
+        sleep(0.5) 
         print(f"Connected to Newport stage {self.dev_number}: {self.idn}")
 
         #err, ctrl = self.error_and_controller_status() # clears error buffer
@@ -160,7 +164,7 @@ class SMC100DUMMY:
 
     device = None
     
-    def __init__(self,port,dev_number):
+    def __init__(self, port, dev_number):
         self.dev_number = dev_number
         self.idn = '123456'
         self.pos = 0
