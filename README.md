@@ -51,9 +51,13 @@ If there have been updates in the repo you then have to upgrade the installation
 $ pip install --upgrade .
 ```
 
-### Add a new driver to the module
+### Add new drivers or modify existing ones
 
-still to be explained
+For modifications always work in a new branch (never the master branch).
+
+New drivers should be tested before they are added to the master branch. Same applies for modifications to already existing modules: Test them, before you add/merge them to the master branch.
+
+Once the modifications are ready to go, increase the version number in the setup file and merge into master. After pushing the changes, every PC can update the package as described above.
 
 ### Troubleshooting
 
