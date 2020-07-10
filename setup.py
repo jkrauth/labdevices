@@ -10,9 +10,11 @@ setup(
         'numpy',                  # for ANDO, ALLIED_VISION
         'pymba',                  # for ALLIED_VISION
         'prologix-gpib-ethernet', # for ANDO
-        'pyvisa'                  # for NEWPORT
+        'pyvisa',                 # for NEWPORT
+        'pyvisa-py',              # needed for pyvisa
+        'pyusb',                  # needed for pyvisa
     ],
-    # For modules which have not entry in pypi.org dependency
+    # For modules which have no entry in pypi.org, dependency
     # links have to be provided. They exist of a link to the
     # project on github + an appendix of the shape
     # '/tarball/master#egg=<PACKAGE_NAME>-<VERSION>',

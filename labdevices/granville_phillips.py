@@ -7,8 +7,7 @@ in the docs folder.
 
 
 File name: granville_phillips.py
-Author: Julian Krauth
-Date created: 2019/07/10
+Date created: 2020/07/10
 Python Version: 3.7                
 """
 import pyvisa
