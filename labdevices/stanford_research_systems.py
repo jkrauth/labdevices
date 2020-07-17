@@ -50,17 +50,20 @@ class DG645:
         self.s.settimeout(timeout)
 
     def initialize(self):
+        """Connect to the device."""
         self.s.connect((self.tcp, self.port))
         time.sleep(0.2)
         print('bla')
         print(f'Connected to:\n    {self.idn}')
 
     def close(self):
+        """Closing connection with the device"""
         print(f'Close connection with:\n    {self.idn}')
         self.s.close()
 
   
     def write(self, cmd: str) -> None:
+        """Send command to device"""
         # Add write termination character and encode
         termination_char = self.DEFAULTS['write_termination']
         cmd += termination_char
@@ -69,6 +72,7 @@ class DG645:
         self.s.send(cmd)
         
     def query(self, cmd: str) -> str:
+        """Send a request to the device and return its respons."""
         self.write(cmd)
         respons = self.s.recv(256)
         respons = respons.decode()
@@ -80,8 +84,13 @@ class DG645:
         idn = self.query('*IDN?')
         return idn
     
-    def setDelay(self, channel, delay, reference = "T0"):
-        
+    def setDelay(self, channel, delay: float, reference = "T0"):
+        """Set the delay of a certain channel with respect to a reference.
+        Arguments:
+        channel -- str/int corresponding to a channel (see self.DEFAULTS)
+        delay -- float, with time in seconds
+        reference -- defaults to 'T0'
+        """
         if isinstance(channel, str):
             channel = self.DEFAULTS['channel'][channel]
         
@@ -90,19 +99,32 @@ class DG645:
 
         cmd = f'DLAY {channel}, {reference}, {delay}'
         self.write(cmd)
-        #wait for 100 ms, this is the time is will take to write the command
-        time.sleep(100*0.001)
+        #wait for 100 ms, this is the time it will take to write the command
+        time.sleep(0.1)
     
     def getDelay(self, channel) -> float:
-        
+        """Request the delay of a certain channel
+        Arguments:
+        channel -- str/int corresponding to a channel (see self.DEFAULTS)
+
+        Returns -- float, the delay in seconds. 
+        Optionally also the reference channel.
+        """
         if isinstance(channel, str):
             channel = self.DEFAULTS['channel'][channel]
         cmd = f'DLAY? {channel}'
         respons = self.query(cmd)
-        return float(respons[2:])
+        reference = respons[0]
+        delay = float(respons[2:])
+        return delay
     
     def getOutputLevel(self, channel):
-        
+        """Request output amplitude of a channel
+        Arguments:
+        channel -- str/int corresponding to a channel (see self.DEFAULTS)
+
+        Returns --float, the amplitude in Volts
+        """
         if isinstance(channel, str):
             channel = self.DEFAULTS['outputBNC'][channel]
         cmd = f'LAMP? {channel}'
