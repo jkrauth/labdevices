@@ -18,9 +18,6 @@ except ImportError as err:
     print("Can't import PrologixGPIBEthernet module for ANDO Spectrometer!\n" +
           "Install plx_gpib_ethernet package from: \n" +
           "https://github.com/nelsond/prologix-gpib-ethernet")
-#install plx_gpib_ethernet package from here: 
-#https://github.com/nelsond/prologix-gpib-ethernet
-
 
 
 class SpectrumAnalyzer:

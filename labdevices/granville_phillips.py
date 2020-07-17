@@ -20,11 +20,11 @@ class GP350:
         'read_termination': '\r\n',
         'encoding': 'ascii',
         'baudrate': 300,
-        'timeout': 100,
-        'parity': visa.constants.Parity.none,
+        'timeout': 1000,
+        'parity': pyvisa.constants.Parity.none,
         'data_bits': 7,
-        'stop_bits': visa.constants.StopBits.two,
-        'flow_control': visa.constants.VI_ASRL_FLOW_NONE,
+        'stop_bits': pyvisa.constants.StopBits.two,
+        'flow_control': pyvisa.constants.VI_ASRL_FLOW_RTS_CTS,
         'query_termination': '?',
     }
 
@@ -51,7 +51,7 @@ class GP350:
         
         # make sure connection is established before doing anything else
         sleep(0.5)
-        print(f"Connected to:\n {self.idn}")
+        print(f"Connected to Granville-Phillips controller.")
 
     def write(self, cmd):
         self.device.write(cmd)

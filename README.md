@@ -90,3 +90,7 @@ SUBSYSTEM=="usb", MODE="0666", GROUP="usb"
 After restarting the PC check that you are part of the usb group by typing `groups` into the terminal.
 
 The communication with the usb device should now work.
+
+##### Ethernet devices
+
+If an ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
