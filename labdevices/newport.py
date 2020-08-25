@@ -5,7 +5,7 @@ Commands and settings for serial communication are found in
 the SMC100 Newport Manual                     
 
 
-File name: NEWPORT.py
+File name: newport.py
 Author: Julian Krauth
 Date created: 2019/05/22
 Python Version: 3.7                     
@@ -87,7 +87,6 @@ class SMC100:
 
     def close(self):
         if self.device is not None:
-            self.device.before_close()
             self.device.close()
         else:
             print('Newport device is already closed')
