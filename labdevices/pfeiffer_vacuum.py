@@ -1,6 +1,16 @@
 """
 Driver for the Pfeiffer Vacuum Dual Gauge TPG 362
 
+Currently only works with a USB connection.
+According to a phone call with a Pfeiffer technician, 
+the ethernet connection should work via port number 8000.
+Unfortunately this currently doesn't work. I am not sure why.
+The guy said that there were some problems with the port
+and that they were fixed with
+firmware 010500 (currently installed is 010300).
+So, in order to use the ethernet communication we might try to 
+install the latest firmware on it. 
+
 File name: pfeiffer_vacuum.py
 Author: Julian Krauth
 Date created: 2020/08/25
@@ -47,7 +57,8 @@ class TPG362:
     device = None
     
     def __init__(self, port='/dev/ttyUSB0'):
-        self.addr = 'ASRL'+port+'::INSTR'
+        #self.addr = 'ASRL'+port+'::INSTR'
+        self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
 
     def initialize(self):
         rm = pyvisa.ResourceManager()
