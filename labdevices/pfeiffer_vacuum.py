@@ -53,6 +53,9 @@ PRESSURE_UNITS = {
 class TPG362:
     """Driver for the TPG362 Pfeiffer Vacuum Dual Gauge
     Works currently only with USB connection.
+
+    It might also work for other/older dual gauge versions
+    of pfeiffer.
     """
     device = None
     

@@ -84,7 +84,7 @@ class DG645:
         idn = self.query('*IDN?')
         return idn
     
-    def setDelay(self, channel, delay: float, reference = "T0"):
+    def set_delay(self, channel, delay: float, reference = "T0"):
         """Set the delay of a certain channel with respect to a reference.
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
@@ -102,7 +102,7 @@ class DG645:
         #wait for 100 ms, this is the time it will take to write the command
         time.sleep(0.1)
     
-    def getDelay(self, channel) -> float:
+    def get_delay(self, channel) -> float:
         """Request the delay of a certain channel
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
@@ -118,7 +118,7 @@ class DG645:
         delay = float(respons[2:])
         return delay
     
-    def getOutputLevel(self, channel):
+    def get_output_level(self, channel):
         """Request output amplitude of a channel
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)

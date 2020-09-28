@@ -1,13 +1,14 @@
 Python package providing the software drivers for the devices in the RCS lab.
 
-### Included Devices
+### Included Devices are from
 
 - Allied Vision Manta
-- AML Stepper Motor Drive
+- Applied Motion Products
 - ANDO Spectrum Analyzer
 - Newport
-- Applied Motion Products
+- Pfeiffer Vacuum
 - Stanford Research Systems
+- Thorlabs
 
 ### Installation
 
