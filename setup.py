@@ -9,7 +9,7 @@ setup(
         'pyyaml',                 # for ALLIED_VISION
         'numpy',                  # for ANDO, ALLIED_VISION
         'pymba',                  # for ALLIED_VISION
-        'prologix-gpib-ethernet', # for ANDO
+        #'prologix-gpib-ethernet', # for ANDO
         'pyvisa',                 # for NEWPORT
         'pyvisa-py',              # needed for pyvisa
         'pyusb',                  # needed for pyvisa
@@ -19,8 +19,7 @@ setup(
     # project on github + an appendix of the shape
     # '/tarball/master#egg=<PACKAGE_NAME>-<VERSION>',
     # where <VERSION> is the git tag to use.
-    dependency_links=[
-      'https://github.com/nelsond/prologix-gpib-ethernet/tarball/master#egg=prologix-gpib-ethernet-0.1.2'
-    ]
+    #dependency_links=[
+    #    'git+https://github.com/nelsond/prologix-gpib-ethernet/tarball/master#egg=prologix-gpib-ethernet-0.1.2'
+    #]
 )
-
