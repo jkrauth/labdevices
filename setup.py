@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='labdevices',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=[
