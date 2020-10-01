@@ -26,7 +26,7 @@ where `<name>` is your environment name. Then activate the environment with
 $ conda activate <name>
 ```
 
-##### A) For Development (I guess this is the better way for the general use in our lab)
+##### A) For development
 
 From inside the package folder run
 
@@ -36,7 +36,7 @@ $ python setup.py develop
 
  Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
 
-##### B) Alternatively
+##### B) For general use
 
 From inside the package folder run
 
@@ -56,7 +56,7 @@ $ pip install --upgrade .
 
 For modifications always work in a new branch (never the master branch).
 
-New drivers should be tested before they are added to the master branch. Same applies for modifications to already existing modules: Test them, before you add/merge them to the master branch.
+New drivers should be tested before the changes are merged into the master branch. Same applies for modifications to already existing modules: Test them, before you add/merge them to the master branch.
 
 Once the modifications are ready to go, increase the version number in the setup file and merge into master. After pushing the changes, every PC can update the package as described above.
 
