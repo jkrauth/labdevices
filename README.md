@@ -17,10 +17,10 @@ We use a new conda environment to work with lab devices.
 Create a conda environment as
 
 ```
-$ conda create -n <name> python=3.6 
+$ conda create -n <name> python=3.6
 ```
 
-where `<name>` is your environment name. Then activate the environment with
+where `<name>` is your environment name. The python version should be 3.6 or higher. Then activate the environment with
 
 ```
 $ conda activate <name>
@@ -46,11 +46,27 @@ $ pip install .
 
 There might also be an option to use conda for installation. I am not sure about that at this moment.
 
-If there have been updates in the repo you then have to upgrade the installation with
+If there have been updates in the repo you then have to upgrade the installation with:
 
 ```
 $ pip install --upgrade .
 ```
+
+### Usage
+
+Once the labdevices package is installed into a conda environment you can simply do e.g.
+
+```python
+from labdevices.thorlabs import TSP01
+```
+
+For each device there should be a dummy device available in order to test software, when there is actually no device connected. For the switching to a dummy device simply import
+
+```python
+from labdevices.thorlabs import TSP01DUMMY
+```
+
+with DUMMY added to the device's class name.
 
 ### Add new drivers or modify existing ones
 

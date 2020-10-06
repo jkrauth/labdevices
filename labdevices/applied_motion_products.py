@@ -59,3 +59,26 @@ class STF03D:
 
     def close(self):
         self.sock.close()
+
+
+class STF03DDUMMY:
+    def __init__(
+            self,
+            device_ip,
+            host_ip=HOST_IP,
+            host_port=HOST_PORT,
+            timeout=5
+    ):
+        self.ip = device_ip
+        self.host_ip = host_ip
+        self.host_port = host_port
+        self.timeout = timeout
+
+    def initialize(self):
+        pass
+
+    def query(self, cmd):
+        pass
+
+    def close(self):
+        pass

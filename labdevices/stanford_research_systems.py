@@ -118,7 +118,7 @@ class DG645:
         delay = float(respons[2:])
         return delay
     
-    def get_output_level(self, channel):
+    def get_output_level(self, channel) -> float:
         """Request output amplitude of a channel
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
@@ -129,7 +129,7 @@ class DG645:
             channel = self.DEFAULTS['outputBNC'][channel]
         cmd = f'LAMP? {channel}'
         respons = self.query(cmd)
-        return answer
+        return respons
 
 
 class DG645DUMMY:
@@ -153,6 +153,31 @@ class DG645DUMMY:
 # cutting = Delay_Generator_TCP('10.0.0.31', 5025)
 # picking = Delay_Generator_TCP('10.0.0.30', 5025)
 
+class DG645DUMMY(DG645):
+    def __init__(self, tcp: str, port: int, timeout: float = 0.010):
+        self.idn = 'Dummy DG645'
+
+    def initialize(self):
+        pass
+
+    def close(self):
+        pass
+
+    def write(self, cmd):
+        pass
+
+    def query(self, cmd):
+        return 'answer'
+    
+    def set_delay(self, channel, delay: float, reference = 'T0'):
+        pass
+
+    def get_delay(self, channel) -> float:
+        return float(1)
+
+    def get_output_level(self, channel):
+        return float(1)
+    
 
 if __name__ == "__main__":
     dg = DG645('10.0.0.34', 5025)
