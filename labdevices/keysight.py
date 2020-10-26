@@ -31,6 +31,7 @@ IP_dict = {
 
 }
 conn_types = ['usb', 'ethernet']
+
 class Oscilloscope:
     """
     Arguments:
@@ -151,7 +152,7 @@ class Oscilloscope:
         return time_val, voltage
         
 
- class OscilloscopeDummy:
+class OscilloscopeDummy:
 
     def __init__(self, port):
         self.port = port
