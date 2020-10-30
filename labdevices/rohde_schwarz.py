@@ -75,11 +75,16 @@ class Oscilloscope:
         result = self.query("MEASurement:RESult:PPEak?") 
         return float(result)
 
-    def VPP(self,channel):
+    def VPP(self, channel):
         self.device.timeout = 8000
         self.write(f"MEASurement:SOURce CH{channel}","MEASurement:PEAK" )
         result = self.query("MEASurement:RESult:PEAK?")
         return float(result)
+
+    def Trace(self, channel):
+        trace = self.query(f'FORMat ASCii; CHANnel{channel}:DATA?')
+        return trace
+
 
     def set_t_scale(self, time):
         """format example: 1.E-9"""
