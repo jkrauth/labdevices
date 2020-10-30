@@ -3,7 +3,7 @@ import time
 import os
 import sys
 import numpy as np
-
+import numpy
 rm = visa.ResourceManager()
 # rm_list = rm.list_resources()
 cur_dir = os.path.abspath(os.path.dirname(__file__))
@@ -81,10 +81,12 @@ class Oscilloscope:
         result = self.query("MEASurement:RESult:PEAK?")
         return float(result)
 
-    def Trace(self, channel):
-        trace = self.query(f'FORMat ASCii; CHANnel{channel}:DATA?')
-        return trace
+    def Trace(self, channel, trace_writing_file):
+        voltage = self.query(f'FORMat ASCii; CHANnel{channel}:DATA?')
+        x_header = self.query(f'CHANnel{channel}:DATA:HEADer?') # returns (xstart, xstop, length)
+        t = np.linspace(x_header[0], x_header[1], x_header[2])
 
+        return t, voltage
 
     def set_t_scale(self, time):
         """format example: 1.E-9"""
