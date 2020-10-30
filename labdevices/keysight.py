@@ -104,7 +104,7 @@ class Oscilloscope:
             self.device.before_close()
             self.device.close()
 
-    def Trace(self, channel, trace_writing_file):
+    def Trace(self, channel):
 
         self.device.timeout = 10000
         self.write(':ACQuire:TYPE NORMal')
@@ -127,15 +127,15 @@ class Oscilloscope:
         y_reference
         ) = self.query(":WAVeform:PREamble?").split(',')
         
-        print(f'wave form is: {wav_form}')
-        print(f'acquire type is: {acq_type}')
-        print(f'wave form points are: {wfmpts}')
-        print(f'average count is: {avgcnt}')
-        print(f'x increment is {x_increment}')
-        print(f'x origin is {x_origin}')
-        print(f'y increment is {y_increment}')
-        print(f'y origin is {y_origin}')
-        print(f'y reference is {y_reference}')
+        # print(f'wave form is: {wav_form}')
+        # print(f'acquire type is: {acq_type}')
+        # print(f'wave form points are: {wfmpts}')
+        # print(f'average count is: {avgcnt}')
+        # print(f'x increment is {x_increment}')
+        # print(f'x origin is {x_origin}')
+        # print(f'y increment is {y_increment}')
+        # print(f'y origin is {y_origin}')
+        # print(f'y reference is {y_reference}')
 
         data_bytes = self.ieee_query(":WAVeform:DATA?")
     
