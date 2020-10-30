@@ -84,7 +84,8 @@ class Oscilloscope:
     def Trace(self, channel, trace_writing_file):
         voltage = self.query(f'FORMat ASCii; CHANnel{channel}:DATA?')
         x_header = self.query(f'CHANnel{channel}:DATA:HEADer?') # returns (xstart, xstop, length)
-        t = np.linspace(x_header[0], x_header[1], x_header[2])
+        x_header = x_header.split(',')
+        t = np.linspace(float(x_header[0]), float(x_header[1]), int(x_header[2]))
 
         return t, voltage
 
