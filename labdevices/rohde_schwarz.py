@@ -46,11 +46,7 @@ class Oscilloscope:
         response = self.device.query(cmd)
         return response
 
-    def write(self,ch,cmd):
-        if not ch:
-            pass
-        else:
-            self.device.write(ch)
+    def write(self, cmd):
         self.device.write(cmd)
 
     # def ieee_query(self,cmd):
@@ -65,33 +61,38 @@ class Oscilloscope:
         return idn
 
     def V_avg(self,channel):
-        self.write(f"MEASurement:SOURce CH{channel}","MEASurement:MAIN MEAN")
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN MEAN")
         result = self.query("MEASurement:RESult:AVG?")
         return float(result)
 
         
     def V_max(self,channel):
-        self.write(f"MEASurement:SOURce CH{channel}", "MEASurement:UPEakvalue")
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:UPEakvalue")
         result = self.query("MEASurement:RESult:PPEak?") 
         return float(result)
 
     def VPP(self, channel):
         self.device.timeout = 8000
-        self.write(f"MEASurement:SOURce CH{channel}","MEASurement:PEAK" )
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:PEAK" )
         result = self.query("MEASurement:RESult:PEAK?")
         return float(result)
 
-    def Trace(self, channel, trace_writing_file):
-        voltage = self.query(f'FORMat ASCii; CHANnel{channel}:DATA?')
+    def Trace(self, channel):
+        self.write(f'CHANnel{channel}:DATA:POINts DEFault')
+        voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
         x_header = self.query(f'CHANnel{channel}:DATA:HEADer?') # returns (xstart, xstop, length)
         x_header = x_header.split(',')
         t = np.linspace(float(x_header[0]), float(x_header[1]), int(x_header[2]))
+        print(f'voltage array length: {len(voltage)}')
+        print(f'header: xstart {x_header[0]}, xstop {x_header[1]}, array length {x_header[2]}')
 
         return t, voltage
 
     def set_t_scale(self, time):
         """format example: 1.E-9"""
-        self.write(ch = None, cmd = f":TIMebase:SCALe {time}")
+        self.write(cmd = f":TIMebase:SCALe {time}")
+
+
 
     def close(self):
         if self.device is not None:
