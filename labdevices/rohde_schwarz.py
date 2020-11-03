@@ -29,11 +29,12 @@ class Oscilloscope:
     """ 
 
     def __init__(self, instrument, connection_type):
+        self.instrument = instrument
         self.device = None
         if connection_type == conn_types[0]:
-            self.device_address = usb_dict[instrument]
+            self.device_address = usb_dict[self.instrument]
         elif connection_type == conn_types[1]:
-            device_IPaddress = IP_dict[instrument]
+            device_IPaddress = IP_dict[self.instrument]
             self.device_address = (f'TCPIP::{device_IPaddress}::INSTR')
     
     def initialize(self):
@@ -49,11 +50,12 @@ class Oscilloscope:
     def write(self, cmd):
         self.device.write(cmd)
 
-    # def ieee_query(self,cmd):
-    #     self.device.timeout = 20000
-    #     self.write(cmd)
-    #     response = self.device.query_binary_values(f'{cmd}', datatype='s')
-    #     return response[0]
+    def ieee_query(self,cmd):
+        self.device.timeout = 20000
+        self.write(cmd)
+        response = self.device.query_binary_values(f'{cmd}', datatype='s')
+
+        return response
         
     @property
     def idn(self):
@@ -78,21 +80,30 @@ class Oscilloscope:
         return float(result)
 
     def Trace(self, channel):
-        self.write(f'CHANnel{channel}:DATA:POINts DEFault')
+        self.write(f'CHANnel{channel}:SINGle')
         voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
-        x_header = self.query(f'CHANnel{channel}:DATA:HEADer?') # returns (xstart, xstop, length)
+        voltage = voltage.split(',')
+        for a, b in enumerate(voltage):
+            voltage[a] = float(b)
+     
+
+        x_header = self.query(f'CHANnel{channel}:DATA:HEADer?') # returns (xstart, xstop, length,Number of values per sample interval) as comma separated string
         x_header = x_header.split(',')
         t = np.linspace(float(x_header[0]), float(x_header[1]), int(x_header[2]))
-        print(f'voltage array length: {len(voltage)}')
-        print(f'header: xstart {x_header[0]}, xstop {x_header[1]}, array length {x_header[2]}')
 
         return t, voltage
+
+    def screen_shot(self):
+        # self.write('HCOPy:CWINdow ON') this closes all windows when taking screen shot so signal can be seen. 
+        # set format 
+        self.write('HCOPy:LANG PNG') 
+        image_bytes = self.ieee_query('HCOPy:DATA?')
+  
+        return image_bytes
 
     def set_t_scale(self, time):
         """format example: 1.E-9"""
         self.write(cmd = f":TIMebase:SCALe {time}")
-
-
 
     def close(self):
         if self.device is not None:
