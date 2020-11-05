@@ -22,6 +22,27 @@ HOST_IP = '0.0.0.0'
 HOST_PORT = 15005
 
 class STF03D:
+
+    translate = {
+        0x0000: 'No alarms',
+        0x0001: 'Position Limit',
+        0x0002: 'CCW Limit',
+        0x0004: 'CW Limit',
+        0x0008: 'Over Temp',
+        0x0010: 'Internal Voltage',
+        0x0020: 'Over Voltage',
+        0x0040: 'Under Voltage',
+        0x0080: 'Over Current',
+        0x0100: 'Open Motor Winding',
+        0x0200: 'Bad Encoder',
+        0x0400: 'Comm Error',
+        0x0800: 'Bad Flash',
+        0x1000: 'No Move',
+        0x2000: '(not used)',
+        0x4000: 'Blank Q Segment',
+        0x8000: '(not used)',
+    }
+
     def __init__(
             self,
             device_ip,
@@ -60,6 +81,74 @@ class STF03D:
     def close(self):
         self.sock.close()
 
+    def get_alarm_code(self) -> str:
+        """Reads back an equivalent hexadecimal value of the 
+        Alarm Code’s 16-bit binary word."""
+        # Strip off the 'AL=' prefix
+        respons = self.query('AL')[3:]
+
+        # Convert hex string to integer
+        alarm = int(respons, 16)
+
+        return self.translate[alarm]
+
+    def get_position(self) -> int:
+        respons = self.query('IP')[3:]
+        print(respons)
+        position = int(respons, 16)
+        return position
+
+    def _move_settings(self, cmd: str, value: None):
+        """Base function for the set/get functionality
+        of the speed setting functions."""
+        if value is None:
+            return self.query(cmd)[3:]
+        else:
+            cmd = cmd + str(value)
+            return self.query(cmd)
+
+    def acceleration(self, value: float=None):
+        """Sets or requests the acceleration used 
+        in point-to-point move commands.
+        Argument:
+        value -- in rps/s (a standard value is 25)
+        """
+        return self._move_settings('AC', value)
+
+    def deceleration(self, value: float=None):
+        """Sets or requests the deceleration used 
+        in point-to-point move commands
+        Argument:
+        value -- in rps/s (a standard value is 25)
+        """
+        return self._move_settings('DE', value)        
+
+    def speed(self, value: float=None):
+        """Sets or requests shaft speed for point-to-point 
+        move commands
+        Argument:
+        value -- in rps (a standard value is 10)        
+        """
+        return self._move_settings('VE', value)
+
+    def _distance_or_position(self, angle: float=None):
+        """Set the distance by which the motor moves after sending
+        a relative move command, or the position to which the motor
+        moves after sending an absolute move command.
+        angle -- in degrees.
+        """
+        # worm wheel ratio 96:1, steps per round 200
+        conversion_factor = 96.*200./360.
+        if angle is None:
+            respons = self._move_settings('DI', None)
+            angle = eval(respons) / conversion_factor
+            return angle
+        else:
+            steps = int(round(conversion_factor * angle)) 
+            return self._move_settings('DI', steps)
+
+    def move_relative(self, distance):
+        pass
 
 class STF03DDUMMY:
     def __init__(
