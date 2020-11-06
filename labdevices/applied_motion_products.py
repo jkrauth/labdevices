@@ -23,7 +23,7 @@ HOST_PORT = 15005
 
 class STF03D:
 
-    translate = {
+    error_codes = {
         0x0000: 'No alarms',
         0x0001: 'Position Limit',
         0x0002: 'CCW Limit',
@@ -41,6 +41,27 @@ class STF03D:
         0x2000: '(not used)',
         0x4000: 'Blank Q Segment',
         0x8000: '(not used)',
+    }
+
+    steps_per_turn = {
+        # Gives the number of steps for a full
+        # motor turn, given the microstep resolution
+        # setting.
+        0: 200,
+        1: 400,
+        3: 2000,
+        4: 5000,
+        5: 10000,
+        6: 12800,
+        7: 18000,
+        8: 20000,
+        9: 21600,
+        10:25000,
+        11:25400,
+        12:25600,
+        13:36000,
+        14:50000,
+        15:50800,
     }
 
     def __init__(
@@ -63,7 +84,7 @@ class STF03D:
         to_send = header + cmd.encode() + end
         self.sock.sendto(to_send, (self.ip, UDP_PORT))
 
-    def _read(self):
+    def _read(self) -> str:
         """Read UDP message, decode, strip off header and end characters
         and return."""
         respons_raw = self.sock.recv(1024)
@@ -80,19 +101,17 @@ class STF03D:
             return self.query(cmd)
 
     def _distance_or_position(self, angle: float=None):
-        """Set the distance by which the motor moves after sending
+        """Set or request the distance by which the motor moves after sending
         a relative move command, or the position to which the motor
         moves after sending an absolute move command.
         angle -- in degrees.
         """
-        # worm wheel ratio 96:1, steps per round 200
-        conversion_factor = 96.*200./360.
         if angle is None:
-            respons = self._move_settings('DI', None)
-            angle = eval(respons) / conversion_factor
+            steps = int(self._move_settings('DI', None))
+            angle = self.step_to_angle(steps)
             return angle
         else:
-            steps = int(round(conversion_factor * angle)) 
+            steps = self.angle_to_step(angle)
             print(f'Move by/to {angle} degrees, equiv. to {steps} steps.')
             return self._move_settings('DI', steps)
 
@@ -113,20 +132,27 @@ class STF03D:
         self._write(cmd)
         return self._read()
 
-    def get_alarm_code(self) -> str:
+    def get_alarm_code(self) -> list:
         """Reads back an equivalent hexadecimal value of the 
-        Alarm Code’s 16-bit binary word."""
+        Alarm Code’s 16-bit binary word and translates it into
+        corresponding error messages."""
         # Strip off the 'AL=' prefix
         respons = self.query('AL')[3:]
-
         # Convert hex string to integer
         alarm = int(respons, 16)
-
-        return self.translate[alarm]
+        error_list = []
+        if not alarm: error_list.append(self.error_codes[alarm])
+        else:
+            for key, val in self.error_codes.items():
+                if key & alarm:
+                    error_list.append(val)
+        return error_list
 
     def get_position(self):
-        respons = self.query('SP')[3:]
-        return respons
+        """Returns the current angle of the rotary feedthrough in degrees."""
+        steps = int(self.query('SP')[3:])
+        print(f'Position in steps is: {steps}')
+        return self.step_to_angle(steps)
 
     def reset_position(self):
         """Set current motor position to the new zero position."""
@@ -134,11 +160,40 @@ class STF03D:
 
     def get_immediate_position(self) -> int:
         """This returns the calculated trajectory position, which
-        is not always equal to the actual position."""
+        is not always equal to the actual position.
+        Units are stepper motor steps.
+        """
         respons = self.query('IP')[3:]
         print(respons)
         position = int(respons, 16)
         return position
+
+    def microstep(self, value: int=None) -> int:
+        """Sets or requests the microstep resolution of the drive.
+        Argument:
+        value -- between [0 and 15] (standard is 8)
+        """
+        return int(self._move_settings('MR', value))
+
+    @property
+    def conversion_factor(self):
+        """This yields the steps/rotation-angle ratio. The steps of the
+        stepper motor depend on the microstep resolution setting.
+        The rotation angle is the one of the rotary feedthrough."""
+        wormwheel_ratio = 96/1
+        steps_per_motor_turn = self.steps_per_turn[self.microstep()]
+        conversion_factor = float(wormwheel_ratio) * float(steps_per_motor_turn) / 360.
+        return conversion_factor
+
+    def step_to_angle(self, step: int) -> float:
+        """Convert stepper motor steps into a rotation angle 
+        of the rotary feedthrough."""
+        return float(step) / self.conversion_factor
+
+    def angle_to_step(self, angle: float) -> int:
+        """Convert an angle of the rotary feedthrough into
+        steps of the stepper motor."""
+        return int(round(angle * self.conversion_factor))
 
     def acceleration(self, value: float=None):
         """Sets or requests the acceleration used 
