@@ -54,13 +54,9 @@ class STF03D:
         self.host_ip = host_ip
         self.host_port = host_port
         self.timeout = timeout
+        self.sock = None
 
-    def initialize(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((self.host_ip, self.host_port))
-        self.sock.settimeout(self.timeout)
-
-    def _write(self, cmd):
+    def _write(self, cmd: str):
         """Send a message with the correct header and end characters"""
         header = bytes([0x00, 0x007])
         end = bytes([0xD])
@@ -74,12 +70,48 @@ class STF03D:
         respons = respons_raw.decode()
         return respons[2:-1]
 
-    def query(self, cmd):
-        self._write(cmd)
-        return self._read()
+    def _move_settings(self, cmd: str, value: None):
+        """Base function for the set/get functionality
+        of the speed setting functions."""
+        if value is None:
+            return self.query(cmd)[3:]
+        else:
+            cmd = cmd + str(value)
+            return self.query(cmd)
+
+    def _distance_or_position(self, angle: float=None):
+        """Set the distance by which the motor moves after sending
+        a relative move command, or the position to which the motor
+        moves after sending an absolute move command.
+        angle -- in degrees.
+        """
+        # worm wheel ratio 96:1, steps per round 200
+        conversion_factor = 96.*200./360.
+        if angle is None:
+            respons = self._move_settings('DI', None)
+            angle = eval(respons) / conversion_factor
+            return angle
+        else:
+            steps = int(round(conversion_factor * angle)) 
+            print(f'Move by/to {angle} degrees, equiv. to {steps} steps.')
+            return self._move_settings('DI', steps)
+
+    def initialize(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((self.host_ip, self.host_port))
+        self.sock.settimeout(self.timeout)
+        print(f'Connected to rotary feedthrough with IP={self.ip}.')
 
     def close(self):
-        self.sock.close()
+        if self.sock is not None:
+            self.sock.close()
+            print(f'Closed rotary feedthrough with IP={self.ip}.')
+        else:
+            print(f'Device is already closed.')
+
+    def query(self, cmd: str) -> str:
+        self._write(cmd)
+        return self._read()
 
     def get_alarm_code(self) -> str:
         """Reads back an equivalent hexadecimal value of the 
@@ -92,20 +124,21 @@ class STF03D:
 
         return self.translate[alarm]
 
-    def get_position(self) -> int:
+    def get_position(self):
+        respons = self.query('SP')[3:]
+        return respons
+
+    def reset_position(self):
+        """Set current motor position to the new zero position."""
+        _ = self.query('SP0')
+
+    def get_immediate_position(self) -> int:
+        """This returns the calculated trajectory position, which
+        is not always equal to the actual position."""
         respons = self.query('IP')[3:]
         print(respons)
         position = int(respons, 16)
         return position
-
-    def _move_settings(self, cmd: str, value: None):
-        """Base function for the set/get functionality
-        of the speed setting functions."""
-        if value is None:
-            return self.query(cmd)[3:]
-        else:
-            cmd = cmd + str(value)
-            return self.query(cmd)
 
     def acceleration(self, value: float=None):
         """Sets or requests the acceleration used 
@@ -131,24 +164,22 @@ class STF03D:
         """
         return self._move_settings('VE', value)
 
-    def _distance_or_position(self, angle: float=None):
-        """Set the distance by which the motor moves after sending
-        a relative move command, or the position to which the motor
-        moves after sending an absolute move command.
-        angle -- in degrees.
+    def move_relative(self, angle: float):
+        """Relative rotation of the feedthrough
+        Argument:
+        angle -- in degrees
         """
-        # worm wheel ratio 96:1, steps per round 200
-        conversion_factor = 96.*200./360.
-        if angle is None:
-            respons = self._move_settings('DI', None)
-            angle = eval(respons) / conversion_factor
-            return angle
-        else:
-            steps = int(round(conversion_factor * angle)) 
-            return self._move_settings('DI', steps)
+        _ = self._distance_or_position(angle)
+        _ = self.query('FL')
 
-    def move_relative(self, distance):
-        pass
+    def move_absolute(self, position: float):
+        """Rotate the feedthrough to a given position
+        Argument:
+        position -- in degrees
+        """
+        _ = self._distance_or_position(position)
+        _ = self.query('FP')
+
 
 class STF03DDUMMY:
     def __init__(
