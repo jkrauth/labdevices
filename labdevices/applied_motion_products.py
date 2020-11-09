@@ -148,26 +148,6 @@ class STF03D:
                     error_list.append(val)
         return error_list
 
-    def get_position(self):
-        """Returns the current angle of the rotary feedthrough in degrees."""
-        steps = int(self.query('SP')[3:])
-        print(f'Position in steps is: {steps}')
-        return self.step_to_angle(steps)
-
-    def reset_position(self):
-        """Set current motor position to the new zero position."""
-        _ = self.query('SP0')
-
-    def get_immediate_position(self) -> int:
-        """This returns the calculated trajectory position, which
-        is not always equal to the actual position.
-        Units are stepper motor steps.
-        """
-        respons = self.query('IP')[3:]
-        print(respons)
-        position = int(respons, 16)
-        return position
-
     def microstep(self, value: int=None) -> int:
         """Sets or requests the microstep resolution of the drive.
         Argument:
@@ -194,6 +174,26 @@ class STF03D:
         """Convert an angle of the rotary feedthrough into
         steps of the stepper motor."""
         return int(round(angle * self.conversion_factor))
+
+    def get_position(self) -> float:
+        """Returns the current angle of the rotary feedthrough in degrees."""
+        steps = int(self.query('SP')[3:])
+        print(f'Position in steps is: {steps}')
+        return self.step_to_angle(steps)
+
+    def reset_position(self):
+        """Set current motor position to the new zero position."""
+        _ = self.query('SP0')
+
+    def get_immediate_position(self) -> int:
+        """This returns the calculated trajectory position, which
+        is not always equal to the actual position.
+        Units are stepper motor steps.
+        """
+        respons = self.query('IP')[3:]
+        print(respons)
+        position = int(respons, 16)
+        return position
 
     def acceleration(self, value: float=None):
         """Sets or requests the acceleration used 
@@ -248,12 +248,53 @@ class STF03DDUMMY:
         self.host_ip = host_ip
         self.host_port = host_port
         self.timeout = timeout
+        # Dummy parameters
+        self.position = 0
+        self.accel = 1
+        self.decel = 1
+        self.velocity = 1
 
     def initialize(self):
         pass
 
-    def query(self, cmd):
-        pass
-
     def close(self):
         pass
+
+    def get_alarm_code(self):
+        return ['no alarms']
+
+    def get_position(self):
+        return self.position
+
+    def reset_position(self):
+        self.position = 0
+
+    def get_immediate_position(self):
+        return self.position
+
+    def acceleration(self, value: float=None):
+        if value is None:
+            return self.accel
+        else:
+            self.accel = value
+            return ''
+
+    def deceleration(self, value: float=None):
+        if value is None:
+            return self.decel
+        else:
+            self.decel = value
+            return ''
+
+    def speed(self, value: float=None):
+        if value is None:
+            return self.velocity
+        else:
+            self.velocity = value
+            return ''
+
+    def move_relative(self, angle: float):
+        self.position += angle
+
+    def move_absolute(self, position: float):
+        self.position = position
