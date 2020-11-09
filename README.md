@@ -28,7 +28,7 @@ $ conda activate <name>
 
 ##### A) For development
 
-From inside the package folder run
+Clone the repository. From inside the package folder run
 
 ```
 $ python setup.py develop
@@ -38,18 +38,16 @@ $ python setup.py develop
 
 ##### B) For general use
 
-From inside the package folder run
+With the activated conda environment run
 
 ```
-$ pip install .
+$ pip install git+https://gitlab.com/vu_rcs/lab_devices.git
 ```
-
-There might also be an option to use conda for installation. I am not sure about that at this moment.
 
 If there have been updates in the repo you then have to upgrade the installation with:
 
 ```
-$ pip install --upgrade .
+$ pip install --upgrade git+https://gitlab.com/vu_rcs/lab_devices.git
 ```
 
 ### Usage
