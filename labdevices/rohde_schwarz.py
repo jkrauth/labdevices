@@ -28,6 +28,11 @@ class FPC1000:
         self.device = self.rm.open_resource(self.addr)
         print(f'Connected to {self.idn}')
 
+    @property
+    def idn(self) -> str:
+        """Returns the identification string of the device."""
+        return self.query('*IDN?')
+        
     def close(self):
         """Close connection to the device"""
         if self.device is not None:
@@ -52,12 +57,11 @@ class FPC1000:
         x_stop = float(self.query('FREQ:STOP?'))
         x = list(np.linspace(x_start, x_stop, len(y)))
         return x, y
-    
-    @property
-    def idn(self) -> str:
-        """Returns the identification string of the device."""
-        return self.query('*IDN?')
 
+    def get_system_alarm(self) -> str:
+        """Return system alarms and clear alarm buffer."""
+        respons = self.device.query('SYST:ERR:ALL?')
+        return respons
 
 rm = pyvisa.ResourceManager()
 # rm_list = rm.list_resources()
