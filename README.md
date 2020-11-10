@@ -7,6 +7,7 @@ Python package providing the software drivers for the devices in the RCS lab.
 - ANDO Spectrum Analyzer
 - Newport
 - Pfeiffer Vacuum
+- Rohde & Schwarz
 - Stanford Research Systems
 - Thorlabs
 
