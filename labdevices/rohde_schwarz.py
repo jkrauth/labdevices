@@ -17,7 +17,6 @@ class FPC1000:
 
     def initialize(self):
         self.device = self.rm.open_resource(self.addr)
-        self.device.timeout = self.timeout
         print(f'Connected to {self.idn}')
 
     def close(self):
