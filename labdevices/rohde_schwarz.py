@@ -61,8 +61,6 @@ class FPC1000:
 
 rm = pyvisa.ResourceManager()
 # rm_list = rm.list_resources()
-cur_dir = os.path.abspath(os.path.dirname(__file__))
-data_folder = os.path.join(cur_dir,"..", "..","Data")
 
 usb_dict = {
     'R&S RTB2004 0':    '',
