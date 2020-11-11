@@ -43,6 +43,26 @@ class STF03D:
         0x8000: '(not used)',
     }
 
+    status_codes = {
+        0x0000: 'Motor disabled',
+        0x0001: 'Motor enabled and in position',
+        0x0002: 'Sampling (for Quick Tuner)',
+        0x0004: 'Drive Fault (check Alarm Code)',
+        0x0008: 'In Position (motor is in position)',
+        0x0010: 'Moving (motor is moving)',
+        0x0020: 'Jogging (currently in jog mode)',
+        0x0040: 'Stopping (in the process of stopping from a stop command)',
+        0x0080: 'Waiting (for an input; executing a WI command)',
+        0x0100: 'Saving (parameter data is being saved)',
+        0x0200: 'Alarm present (check Alarm Code)',
+        0x0400: 'Homing (executing an SH command)',
+        0x0800: 'Waiting (for time; executing a WD or WT command)',
+        0x1000: 'Wizard running (Timing Wizard is running)',
+        0x2000: 'Checking encoder (Timing Wizard is running)',
+        0x4000: 'Q Program is running',
+        0x8000: 'Initializing (happens at power up)',
+    }
+
     steps_per_turn = {
         # Gives the number of steps for a full
         # motor turn, given the microstep resolution
@@ -132,10 +152,11 @@ class STF03D:
         self._write(cmd)
         return self._read()
 
-    def get_alarm_code(self) -> list:
+    def get_alarm(self) -> list:
         """Reads back an equivalent hexadecimal value of the 
-        Alarm Code’s 16-bit binary word and translates it into
-        corresponding error messages."""
+        Alarm Code's 16-bit binary word and translates it into
+        corresponding error messages.
+        """
         # Strip off the 'AL=' prefix
         respons = self.query('AL')[3:]
         # Convert hex string to integer
@@ -147,6 +168,28 @@ class STF03D:
                 if key & alarm:
                     error_list.append(val)
         return error_list
+
+    def get_status(self) -> list:
+        """Reads back an equivalent hexadecimal value of the
+        Status Code's 16-bit binary word and translates it into
+        corresponding status messages.
+        """
+        # Strip off the 'SC=' prefix
+        respons = self.query('SC')[3:]
+        status = int(respons, 16)
+        status_list = []
+        if not status: status_list.append(self.status_codes[status])
+        else:
+            for key, val in self.status_codes.items():
+                if key & status:
+                    status_list.append(val)
+        return status_list
+
+    def is_moving(self) -> bool:
+        respons = self.query('SC')[3:]
+        status = int(respons, 16)
+        if 0x0010 & status: return True
+        else: return False
 
     def microstep(self, value: int=None) -> int:
         """Sets or requests the microstep resolution of the drive.

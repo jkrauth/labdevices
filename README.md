@@ -2,13 +2,15 @@ Python package providing the software drivers for the devices in the RCS lab.
 
 ### Included Devices are from
 
-- Allied Vision Manta
-- Applied Motion Products
-- ANDO Spectrum Analyzer
-- Newport
-- Pfeiffer Vacuum
-- Stanford Research Systems
-- Thorlabs
+- **Allied Vision**: Manta
+- **Applied Motion Products**: STF03D
+- **ANDO**: SpectrumAnalyzer
+- **Keysight**: ?
+- **Newport**: SMC100
+- **Pfeiffer Vacuum**: TPG362
+- **Rohde & Schwarz**: FPC1000, ?
+- **Stanford Research Systems**: DG645
+- **Thorlabs**: TSP01
 
 ### Installation
 

@@ -29,7 +29,7 @@ import time
 
 import pymba
 
-class CCDcamera:
+class Manta:
         
     camera = None
     
@@ -196,7 +196,7 @@ class CCDcamera:
             self.camera.PixelFormat = pix
 
 
-class CCDcameraDummy:
+class MantaDummy:
 
     camera = None
 
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     img_width = 1936
     img_height = 1216
 
-    ccd = CCDcamera()
+    ccd = Manta()
 
     ccd.initialize()
     # print(ccd.exposure())
