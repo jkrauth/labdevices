@@ -105,14 +105,14 @@ class Oscilloscope:
 
         print(f"Connected to:\n{self.idn}")
 
-    def query(self,cmd):
+    def query(self, cmd: str):
         response = self.device.query(cmd)
         return response
 
-    def write(self, cmd):
+    def write(self, cmd: str):
         self.device.write(cmd)
 
-    def ieee_query(self,cmd):
+    def ieee_query(self, cmd: str):
         self.device.timeout = 20000
         self.write(cmd)
         response = self.device.query_binary_values(f'{cmd}', datatype='s')
@@ -124,24 +124,23 @@ class Oscilloscope:
         idn = self.query("*IDN?")
         return idn
 
-    def V_avg(self,channel):
+    def V_avg(self,channel: int):
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN MEAN")
         result = self.query("MEASurement:RESult:AVG?")
         return float(result)
 
         
-    def V_max(self,channel):
+    def V_max(self,channel: int):
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:UPEakvalue")
         result = self.query("MEASurement:RESult:PPEak?") 
         return float(result)
 
-    def VPP(self, channel):
-        self.device.timeout = 8000
-        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:PEAK" )
+    def VPP(self, channel: int):
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:PEAK")
         result = self.query("MEASurement:RESult:PEAK?")
         return float(result)
 
-    def Trace(self, channel):
+    def Trace(self, channel: int):
         print(f'acquiring trace for channel {channel}')
         self.write(f'CHANnel{channel}:SINGle')
         voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
@@ -164,8 +163,8 @@ class Oscilloscope:
   
         return image_bytes
 
-    def set_t_scale(self, time):
-        """format example: 1.E-9"""
+    def set_t_scale(self, time: str):
+        """format example: '1.E-9'"""
         self.write(cmd = f":TIMebase:SCALe {time}")
 
     def close(self):
