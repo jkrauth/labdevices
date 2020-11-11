@@ -5,8 +5,6 @@ Module for Rohde & Schwarz devices.
 import pyvisa
 import numpy as np
 from time import sleep
-import os
-import sys
 
 class FPC1000:
     """Simple spectrum analyzer.
@@ -49,7 +47,10 @@ class FPC1000:
     def get_trace(self):
         """Get the trace which is currently shown on the display.
         For some reason this function sometimes times out.
-        Increasing the timeout time couldn't solve the issue."""
+        Increasing the timeout time couldn't solve the issue.
+        
+        Return x and y as lists of floats.
+        """
         raw_y = self.query('TRAC:DATA? TRACE1')
         y = [float(i) for i in raw_y.split(',')]
         sleep(0.1)
@@ -80,12 +81,16 @@ conn_types = ['usb', 'ethernet']
 
 class Oscilloscope:
     """
-    Arguments:
-    instrument -- str, Device Name from DICT
-    connection_type -- str, 'USB' or 'ethernet'
-    """ 
-
-    def __init__(self, instrument, connection_type):
+    Is tested with the following Rohde & Schwarz oscilloscope 
+    models:
+    
+    """
+    def __init__(self, instrument: str, connection_type: str):
+        """
+        Arguments:
+        instrument -- str, Device Name from DICT
+        connection_type -- str, 'USB' or 'ethernet'
+        """ 
         self.instrument = instrument
         self.device = None
         if connection_type == conn_types[0]:
