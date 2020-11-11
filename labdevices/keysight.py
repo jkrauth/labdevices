@@ -1,8 +1,4 @@
-"""
-Need to redo GUI such that there is a check box for ethernet or USB which then enables a dictionnary
-containing all the device options with each device linked to its appropriate USB or IP address
-Also need to disable screen shot function before any measurement is carried out.
-"""
+
 
 import pyvisa as visa 
 import time
