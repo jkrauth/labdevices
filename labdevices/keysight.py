@@ -173,7 +173,7 @@ class OscilloscopeDummy:
         self.VPP_result = random()* 10 
         return self.VPP_result
 
-    def set_t_scale(self):
+    def set_t_scale(self, time):
         pass
 
     def nothing(self, channel):
