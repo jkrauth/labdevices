@@ -1,21 +1,14 @@
 """
-Need to redo GUI such that there is a check box for ethernet or USB which then enables a dictionnary
-containing all the device options with each device linked to its appropriate USB or IP address
-Also need to disable screen shot function before any measurement is carried out.
+Model for keysight devices, like e.g. oscilloscopes.
 """
 
 import pyvisa as visa 
 import time
-import os
-import sys
 import numpy as np
 from random import random
 
 rm = visa.ResourceManager()
 # rm_list = rm.list_resources()
-cur_dir = os.path.abspath(os.path.dirname(__file__))
-data_folder = os.path.join(cur_dir,"..", "..","Data")
-
 
 usb_dict = {
     'Keysight 3034T':   'USB0::0x2A8D::0x1760::MY55280218::0::INSTR',
@@ -34,11 +27,15 @@ conn_types = ['usb', 'ethernet']
 
 class Oscilloscope:
     """
-    Arguments:
-    instrument -- str, Device Name from DICT
-    connection_type -- str, 'USB' or 'ethernet'
+    Class for Keysight oscilloscopes. So far tested with models:
+    ...
     """
     def __init__(self, instrument: str, connection_type: str):
+        """
+        Arguments:
+        instrument -- str, Device Name from DICT
+        connection_type -- str, 'USB' or 'ethernet'
+        """
         self.device = None
         print(connection_type)
         if connection_type == conn_types[0]:
