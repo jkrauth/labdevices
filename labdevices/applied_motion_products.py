@@ -115,7 +115,8 @@ class STF03D:
         """Base function for the set/get functionality
         of the speed setting functions."""
         if value is None:
-            return self.query(cmd)[3:]
+            respons = self.query(cmd)[3:]
+            return respons
         else:
             cmd = cmd + str(value)
             return self.query(cmd)
@@ -194,9 +195,12 @@ class STF03D:
     def microstep(self, value: int=None) -> int:
         """Sets or requests the microstep resolution of the drive.
         Argument:
-        value -- between [0 and 15] (standard is 8)
+        value -- between [0 and 15] (standard is 3)
         """
-        return int(self._move_settings('MR', value))
+        respons = self._move_settings('MR', value)
+        if value is None:
+            respons = int(respons)
+        return respons
 
     @property
     def conversion_factor(self):
@@ -215,8 +219,28 @@ class STF03D:
 
     def angle_to_step(self, angle: float) -> int:
         """Convert an angle of the rotary feedthrough into
-        steps of the stepper motor."""
+        steps of the stepper motor.
+        Argument:
+        angle -- in degree"""
         return int(round(angle * self.conversion_factor))
+
+    def max_current(self, value: float):
+        """Set or request the maximum idle and change current limit.
+        value -- in Ampere, max is 3 A"""
+        return self._move_settings('MC', value)
+
+    def idle_current(self, value: float):
+        """Set or request the current the standing still situation.
+        A good value seems to be 0.5 A.
+        value -- in Ampere, max is given by self.max_current()."""
+        return self._move_settings('IC', value)
+
+    def change_current(self, value: float):
+        """Set or request the current for moving the stepper motor.
+        For not missing any steps that should be as high as possible,
+        which in this case is 3 A.
+        value -- in Ampere, max is given by self.max_current()."""
+        return self._move_settings('CC', value)
 
     def get_position(self) -> float:
         """Returns the current angle of the rotary feedthrough in degrees."""
@@ -242,7 +266,7 @@ class STF03D:
         """Sets or requests the acceleration used 
         in point-to-point move commands.
         Argument:
-        value -- in rps/s (a standard value is 25)
+        value -- in rps/s (a standard value is 1)
         """
         return self._move_settings('AC', value)
 
@@ -250,7 +274,7 @@ class STF03D:
         """Sets or requests the deceleration used 
         in point-to-point move commands
         Argument:
-        value -- in rps/s (a standard value is 25)
+        value -- in rps/s (a standard value is 1)
         """
         return self._move_settings('DE', value)        
 
@@ -258,7 +282,7 @@ class STF03D:
         """Sets or requests shaft speed for point-to-point 
         move commands
         Argument:
-        value -- in rps (a standard value is 10)        
+        value -- in rps (a standard value is 2)        
         """
         return self._move_settings('VE', value)
 
