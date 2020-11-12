@@ -224,18 +224,18 @@ class STF03D:
         angle -- in degree"""
         return int(round(angle * self.conversion_factor))
 
-    def max_current(self, value: float):
+    def max_current(self, value: float=None):
         """Set or request the maximum idle and change current limit.
         value -- in Ampere, max is 3 A"""
         return self._move_settings('MC', value)
 
-    def idle_current(self, value: float):
+    def idle_current(self, value: float=None):
         """Set or request the current the standing still situation.
         A good value seems to be 0.5 A.
         value -- in Ampere, max is given by self.max_current()."""
-        return self._move_settings('IC', value)
+        return self._move_settings('CI', value)
 
-    def change_current(self, value: float):
+    def change_current(self, value: float=None):
         """Set or request the current for moving the stepper motor.
         For not missing any steps that should be as high as possible,
         which in this case is 3 A.
