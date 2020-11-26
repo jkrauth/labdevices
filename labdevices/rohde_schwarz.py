@@ -68,9 +68,9 @@ rm = pyvisa.ResourceManager()
 # rm_list = rm.list_resources()
 
 usb_dict = {
-    'R&S RTB2004 0':    '',
+    'R&S RTB2004 0':    'USB0::0x0AAD::0x01D6::111290::INSTR',
     'R&S RTB2004 1':    'USB0::0x0AAD::0x01D6::111287::0::INSTR',
-    'R&S RTB2004 2':    '',}
+    'R&S RTB2004 2':    'USB0::0x0AAD::0x01D6::111280::INSTR',}
 
 IP_dict = {
     'R&S RTB2004 0':    '10.0.0.80',
@@ -126,22 +126,23 @@ class Oscilloscope:
 
     def V_avg(self,channel: int):
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN MEAN")
-        result = self.query("MEASurement:RESult:AVG?")
+        result = self.query("MEASurement:RESult?")
         return float(result)
 
         
     def V_max(self,channel: int):
-        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:UPEakvalue")
-        result = self.query("MEASurement:RESult:PPEak?") 
+        self.write('MEASurement:STATistics:RESet')
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN UPEakvalue")
+        result = self.query("MEASurement:RESult?") 
         return float(result)
 
     def VPP(self, channel: int):
-        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:PEAK")
-        result = self.query("MEASurement:RESult:PEAK?")
+        self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN PEAK")
+        result = self.query("MEASurement:RESult?")
         return float(result)
 
     def Trace(self, channel: int):
-        print(f'acquiring trace for channel {channel}')
+        print(f'acquiring trace for channel {channel+1}')
         self.write(f'CHANnel{channel}:SINGle')
         voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
         voltage = voltage.split(',')
@@ -160,7 +161,7 @@ class Oscilloscope:
         # set format 
         self.write('HCOPy:LANG PNG') 
         image_bytes = self.ieee_query('HCOPy:DATA?')
-  
+        
         return image_bytes
 
     def set_t_scale(self, time: str):
