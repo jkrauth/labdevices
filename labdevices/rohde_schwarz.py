@@ -101,9 +101,10 @@ class Oscilloscope:
     
     def initialize(self):
         #rm_list = rm.list_resources()
+       
         self.device = rm.open_resource(self.device_address)
-
         print(f"Connected to:\n{self.idn}")
+       
 
     def query(self, cmd: str):
         response = self.device.query(cmd)
@@ -131,7 +132,7 @@ class Oscilloscope:
 
         
     def V_max(self,channel: int):
-        self.write('MEASurement:STATistics:RESet')
+        
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN UPEakvalue")
         result = self.query("MEASurement:RESult?") 
         return float(result)
