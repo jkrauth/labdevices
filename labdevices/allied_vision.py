@@ -147,7 +147,7 @@ class Manta:
         """
         self.camera.arm('SingleFrame')
         frame = self.camera.acquire_frame()
-        image = frame.buffer_data_numpy()
+        image = frame.buffer_data_numpy().copy()
         self.camera.disarm()
         return image
 
