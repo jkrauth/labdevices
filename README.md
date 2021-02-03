@@ -1,4 +1,6 @@
-Python package providing the software drivers for the devices in the RCS lab.
+# About the labdevices package
+
+This python package provides simple software drivers for the easy use of typical devices found in atomic physics research labs.
 
 ### Included Devices are from
 
@@ -12,9 +14,9 @@ Python package providing the software drivers for the devices in the RCS lab.
 - **Stanford Research Systems**: DG645
 - **Thorlabs**: TSP01
 
-### Installation
+# Installation
 
-We use a new conda environment to work with lab devices.
+It is recommended to work in a new virtual environment when installing this package.
 
 Create a conda environment as
 
@@ -68,17 +70,33 @@ from labdevices.thorlabs import TSP01DUMMY
 
 with DUMMY added to the device's class name.
 
-### Add new drivers or modify existing ones
+# Contributing
 
-For modifications always work in a new branch (never the master branch).
+Add new drivers or improve existing ones.
 
-Add a new class into a file which carries the name of its company. If any non-standard packages are required, add them to the list in the setup.py file.
+Quick step guideline:
 
-New drivers should be tested before the changes are merged into the master branch. Same applies for modifications to already existing modules: Test them, before you add/merge them to the master branch.
+1. Fork the project
 
-Once the modifications are ready to go, increase the version number in the setup file and merge into master. After pushing the changes, every PC can update the package as described above.
+2. Create your feature branch
 
-### Troubleshooting
+3. Commit changes
+
+4. Push to the branch
+
+5. Open a pull request
+
+Add a new class in a file that carries the name of its company. If any non-standard packages are required, add them to the list in the setup.py file.
+
+New drivers should be tested before the changes are merged into the master branch. Same applies for modifications to already existing modules: Test them before you push.
+
+Please keep in mind to:
+
+- stick to the [naming convention](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html). 
+- use docstrings whenever useful, according to [PEP257](https://www.python.org/dev/peps/pep-0257/).
+- not include paths for saving files, VISA addresses of specific devices, etc., that should be part of your local application.
+
+# Troubleshooting
 
 ##### Ubuntu
 
@@ -113,3 +131,4 @@ The communication with the usb device should now work.
 ##### Ethernet devices
 
 If an ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
+
