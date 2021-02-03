@@ -1,21 +1,21 @@
 """
-Driver class for the Allied Vision CCD camera.
+Driver module for CCD/CMOS cameras from Allied Vision.
 It uses the python wrapper modul 'pymba' available on Github:
 https://github.com/morefigs/pymba
-version: pymba 0.3.6
+Tested with version 0.3.6
+
 The C/C++ libraries are provided by Allied Vision under the
 name 'Vimba'.
-version: Vimba 3.0
+Tested with version: Vimba 3.0
 
-The camera originally was set to
+The camera originally is set to
 IP Config Mode: Auto IP config mode
 Gateway: 192.168.2.254
 IP: 192.168.2.21
 Subnet Mask: 255.255.255.0
 The IP of the camera can be set by the user (persistent mode). 
-I set it to 10.0.0.41. So it is in our subnet. Gateway is 0.0.0.0
 
-File name: ALLIED_VISION_CCD.py
+File name: allied_vision.py
 Author: Julian Krauth
 Date created: 2019/11/14
 Python Version: 3.7  
@@ -33,8 +33,11 @@ class Manta:
         
     camera = None
     
-    def __init__(self, camera_id='DEV_000F314E1E59'):
-
+    def __init__(self, camera_id):
+        """
+        Arguments:
+        camera_id -- str, usually in a format like 'DEV_000F314E1E59'
+        """
         # Start the camera package
         self.vimba = pymba.Vimba()
         self.vimba.startup()

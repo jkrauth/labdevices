@@ -3,7 +3,7 @@ Class that implements the commands used for the control
 of the ANDO Spectrum Analyzer. The device is connected via a
 prologix gpib-to-ethernet adapter.
 
-File name: ANDO_SPECTROMETER.py
+File name: ando.py
 Author: Julian Krauth
 Date created: 27.11.2019
 Python Version: 3.7
@@ -27,7 +27,11 @@ class SpectrumAnalyzer:
     def __init__(self,
                  ip='10.0.0.40',
                  gpib=1):
-
+        """
+        Arguments:
+        ip -- str, ip address of the GPIB Ethernet Adapter
+        gpib -- int, address of the gpib device, a number between 1 and 15
+        """
         self.ip = ip
         self.gpib = gpib
         
