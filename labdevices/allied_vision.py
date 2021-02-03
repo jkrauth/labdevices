@@ -64,12 +64,20 @@ class Manta:
             self.camera.close()
             self.vimba.shutdown()
             #save settings (not implemented)
-
+	
     @property
     def modelName(self) -> str:
         name = self.camera.DeviceModelName
         return name
 
+    @property
+    def packetSize(self) -> int:
+        return self.camera.GVSPPacketSize
+
+    @packetSize.setter
+    def packetSize(self,value:int):
+        self.camera.GVSPPacketSize=value
+    
     @property
     def exposure(self) -> int:
         """Exposure in microseconds"""
@@ -79,7 +87,7 @@ class Manta:
     @exposure.setter
     def exposure(self,expos: int):
         self.camera.ExposureTimeAbs = expos*1e6
-
+	
     @property
     def gain(self):
         # Best image quality is achieved with gain = 0
