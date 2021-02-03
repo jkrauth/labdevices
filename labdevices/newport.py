@@ -4,22 +4,22 @@ to the SMC100 controller.
 Commands and settings for serial communication are found in 
 the SMC100 Newport Manual                     
 
-
 File name: newport.py
 Author: Julian Krauth
 Date created: 2019/05/22
 Python Version: 3.7                     
 """
 
-
-#from .decorators import boundaries
-
 import visa
 from time import sleep
 
 
 class SMC100:
+    """Class for a controller device for positioners.
 
+    It works via a USB connection.
+    """
+    
     DEFAULTS = {
         'write_termination': '\r\n',
         'read_termination': '\r\n',

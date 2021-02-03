@@ -1,7 +1,5 @@
 """
 For communication with devices from Applied Motion Products.
-We currently use the STF03-D Stepper Motor Controllers for our
-rotary feedthroughs.
 
 The IP can be set via a small wheel (S1) on the device itself.
 We used the windows software 'STF Configurator' from Applied Motion
@@ -22,7 +20,8 @@ HOST_IP = '0.0.0.0'
 HOST_PORT = 15005
 
 class STF03D:
-
+    """Class for the STF03-D Stepper Motor Controllers."""
+    
     error_codes = {
         0x0000: 'No alarms',
         0x0001: 'Position Limit',

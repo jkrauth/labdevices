@@ -11,6 +11,7 @@ import time
 
 
 class DG645:
+    """ Driver for delay generators """
 
     DEFAULTS = {
         'outputBNC': {

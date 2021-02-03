@@ -55,10 +55,10 @@ class SpectrumAnalyzer:
             print(idn_respons[i], each)
             i+=1
 
-    def send_cmd(self,cmd):
+    def send_cmd(self, cmd:str):
         self.ando.write(cmd)
 
-    def send_query(self,query):
+    def send_query(self, query:str):
         query = self.ando.query(query)
         query = query.rstrip('\r\n')
         query = query.split(',')
@@ -69,7 +69,7 @@ class SpectrumAnalyzer:
         while eval(self.ando.query('SWEEP?')[0])!=0:
             time.sleep(.5)
 
-    def sampling(self,smpl=None):
+    def sampling(self, smpl:int=None):
         """ Get/Set sampling rate"""
         if smpl is None:
             smpl = self.send_query('SMPL?')
@@ -92,7 +92,7 @@ class SpectrumAnalyzer:
         """
         self.send_cmd('SGL')
 
-    def _get_data(self, cmd):
+    def _get_data(self, cmd:str):
         """
         Retreives x or y data.
 
@@ -137,7 +137,7 @@ class SpectrumAnalyzer:
         return center_wavelength, bandwidth, modes
 
 
-    def ctr(self, wl=None):
+    def ctr(self, wl:float=None):
         """
         Get/Set the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
@@ -148,7 +148,7 @@ class SpectrumAnalyzer:
         else:
             self.send_cmd('CTRWL%f' % (wl))
 
-    def span(self, span=None):
+    def span(self, span:float=None):
         """
         Get/Set the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
@@ -159,7 +159,7 @@ class SpectrumAnalyzer:
         else:
             self.send_cmd('SPAN%f' % (span))
 
-    def cwMode(self, cw=None):
+    def cwMode(self, cw:bool=None):
         """
         Get/Set measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
@@ -177,7 +177,7 @@ class SpectrumAnalyzer:
             print(cw)
             print("ANDO mode number has to be either 0 or 1!")
 
-    def peakHoldMode(self,time):
+    def peakHoldMode(self, time:int):
         """
         If in pulsed mode (see cwMode method) the Ando can use three 
         different ways to trigger. One is the peakHoldMode, which
