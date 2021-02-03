@@ -30,7 +30,10 @@ import time
 import pymba
 
 class Manta:
-        
+    """
+    Driver class for Allied Vision Manta Cameras.
+    """
+
     camera = None
     
     def __init__(self, camera_id):
@@ -63,7 +66,6 @@ class Manta:
         if self.camera is not None:
             self.camera.close()
             self.vimba.shutdown()
-            #save settings (not implemented)
 	
     @property
     def modelName(self) -> str:

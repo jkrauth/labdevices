@@ -89,8 +89,8 @@ class STF03D:
             device_ip,
             host_ip=HOST_IP,
             host_port=HOST_PORT,
-            timeout=5
-    ):
+            timeout=5):
+        
         self.ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port

@@ -1,5 +1,5 @@
 """
-Class that implements the commands used for the control
+Module that implements the commands used for the control
 of the ANDO Spectrum Analyzer. The device is connected via a
 prologix gpib-to-ethernet adapter.
 
@@ -15,18 +15,21 @@ import time
 try:
     from plx_gpib_ethernet import PrologixGPIBEthernet
 except ImportError as err:
-    print("Can't import PrologixGPIBEthernet module for ANDO Spectrometer!\n" +
-          "Install plx_gpib_ethernet package from: \n" +
-          "https://github.com/nelsond/prologix-gpib-ethernet")
+    print(
+        "Can't import PrologixGPIBEthernet module for ANDO Spectrometer!\n" +
+        "Install plx_gpib_ethernet package from: \n" +
+        "https://github.com/nelsond/prologix-gpib-ethernet"
+    )
 
 
 class SpectrumAnalyzer:
 
     ando = None
 
-    def __init__(self,
-                 ip='10.0.0.40',
-                 gpib=1):
+    def __init__(
+            self,
+            ip='10.0.0.40',
+            gpib=1):
         """
         Arguments:
         ip -- str, ip address of the GPIB Ethernet Adapter
@@ -83,12 +86,18 @@ class SpectrumAnalyzer:
             print('Ando is already closed!')
 
     def sweep(self):
-        """Does a sweep with the current settings and saves the data in a buffer.
-        Read out the buffer using self.getData()"""
+        """
+        Does a sweep with the current settings and saves the data in a buffer.
+        Read out the buffer using self.getData()
+        """
         self.send_cmd('SGL')
 
-    def _get_data(self,cmd):
-        """cmd = 'LDATA' or 'WDATA', for Level- or Wavelength- data"""
+    def _get_data(self, cmd):
+        """
+        Retreives x or y data.
+
+        Argument:
+        cmd = 'LDATA' or 'WDATA', for Level- or Wavelength- data"""
         # Number of bins per step . Has to be small to fit into buffer length.
         step = 20
         #i_rep = int((self.sampling()-1)/step)
@@ -128,7 +137,7 @@ class SpectrumAnalyzer:
         return center_wavelength, bandwidth, modes
 
 
-    def ctr(self,wl=None):
+    def ctr(self, wl=None):
         """
         Get/Set the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
@@ -139,7 +148,7 @@ class SpectrumAnalyzer:
         else:
             self.send_cmd('CTRWL%f' % (wl))
 
-    def span(self,span=None):
+    def span(self, span=None):
         """
         Get/Set the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
@@ -150,7 +159,7 @@ class SpectrumAnalyzer:
         else:
             self.send_cmd('SPAN%f' % (span))
 
-    def cwMode(self,cw=None):
+    def cwMode(self, cw=None):
         """
         Get/Set measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
@@ -182,9 +191,10 @@ class AndoSpectrumAnalyzerDummy:
 
     ando = None
 
-    def __init__(self,
-                 ip='10.0.0.40',
-                 gpib=1):
+    def __init__(
+        self,
+        ip='10.0.0.40',
+        gpib=1):
 
         self.ip = ip
         self.gpib = gpib
