@@ -13,20 +13,15 @@ IP Config Mode: Auto IP config mode
 Gateway: 192.168.2.254
 IP: 192.168.2.21
 Subnet Mask: 255.255.255.0
-The IP of the camera can be set by the user (persistent mode). 
+The IP of the camera can be set by the user (persistent mode).
 
 File name: allied_vision.py
 Author: Julian Krauth
 Date created: 2019/11/14
-Python Version: 3.7  
+Python Version: 3.7
 """
-import os
-import sys
-import yaml
-
-import numpy as np
 import time
-
+import numpy as np
 import pymba
 
 class Manta:
@@ -35,8 +30,8 @@ class Manta:
     """
 
     camera = None
-    
-    def __init__(self, camera_id):
+
+    def __init__(self, camera_id: str):
         """
         Arguments:
         camera_id -- str, usually in a format like 'DEV_000F314E1E59'
@@ -44,29 +39,30 @@ class Manta:
         # Start the camera package
         self.vimba = pymba.Vimba()
         self.vimba.startup()
-        
+
         # Find cameras
         camera_ids = self.vimba.camera_ids()
         print ("Available cameras : %s" % (camera_ids))
         # Find correct camera index
         self.camera_id = camera_id
-        for i in range(len(camera_ids)) :
-            if self.camera_id == camera_ids[i]:
-                self.camera_index = i
-                break        
+        for index, identity in enumerate(camera_ids):
+            if self.camera_id == identity:
+                self.camera_index = index
+                break
 
     def initialize(self):
         """Establish connection to camera"""
         self.camera = self.vimba.camera(self.camera_index)
         self.camera.open()
         print(f"Connected to camera : {self.camera_id}")
- 
-        
+
+
     def close(self):
+        """Close connection to camera"""
         if self.camera is not None:
             self.camera.close()
             self.vimba.shutdown()
-	
+
     @property
     def modelName(self) -> str:
         name = self.camera.DeviceModelName
@@ -79,7 +75,7 @@ class Manta:
     @packetSize.setter
     def packetSize(self,value:int):
         self.camera.GVSPPacketSize=value
-    
+
     @property
     def exposure(self) -> int:
         """Exposure in microseconds"""
@@ -89,7 +85,7 @@ class Manta:
     @exposure.setter
     def exposure(self,expos: int):
         self.camera.ExposureTimeAbs = expos*1e6
-	
+
     @property
     def gain(self):
         # Best image quality is achieved with gain = 0
@@ -99,7 +95,7 @@ class Manta:
     @gain.setter
     def gain(self,gain):
         self.camera.Gain = gain
-            
+
     @property
     def roi_x(self) -> int:
         return self.camera.OffsetX
@@ -107,7 +103,7 @@ class Manta:
     @roi_x.setter
     def roi_x(self, val: int):
         self.camera.OffsetX = val
-        
+
     @property
     def roi_y(self) -> int:
         return self.camera.OffsetY
@@ -119,7 +115,7 @@ class Manta:
     @property
     def roi_dx(self) -> int:
         return self.camera.Width
-    
+
     @roi_dx.setter
     def roi_dx(self, val: int):
         self.camera.Width = val
@@ -138,22 +134,22 @@ class Manta:
         width = self.camera.SensorWidth
         height = self.camera.SensorHeight
         return width, height
-                
+
     @property
     def acquisitionMode(self):
         return self.camera.AcquisitionMode
-        
+
     @acquisitionMode.setter
     def acquisitionMode(self, mode):
-        OPTIONS = {'SingleFrame', 'Continuous'}
-        if mode in OPTIONS:
+        options = {'SingleFrame', 'Continuous'}
+        if mode in options:
             self.camera.arm(mode)
         else:
             raise Exception(f"Value '{mode}' for acquisition mode is not valied")
-                  
+
     def takeSingleImg(self):
         """
-        Sets everything to create a single image, takes the image 
+        Sets everything to create a single image, takes the image
         and returns it.
         The argument adapts the method for the pixel format set in
         the camera. See pixFormat method.
@@ -164,7 +160,7 @@ class Manta:
         self.camera.disarm()
         return image
 
-    
+
     def trigMode(self, mode=None):
         """Toggle Trigger Mode set by 1/0, respectively.
         Keyword Arguments:
@@ -172,7 +168,7 @@ class Manta:
         Returns:
             int -- 0 or 1, depending on trigger mode off or on
         """
-        if mode==None:
+        if mode is None:
             onoff = {'Off': 0, 'On': 1}
             mode = self.camera.TriggerMode
             return onoff[mode]
@@ -187,7 +183,7 @@ class Manta:
         Returns:
             str -- trigger source
         """
-        if source==None:
+        if source is None:
             source = self.camera.TriggerSource
             return source
         else:
@@ -197,12 +193,12 @@ class Manta:
     def pixFormat(self, pix=None):
         """Get/Select pixel format
         Keyword Arguments:
-            pix {str} -- possible values: 'Mono8','Mono12','Mono12Packed' 
+            pix {str} -- possible values: 'Mono8','Mono12','Mono12Packed'
                          (default: {None})
         Returns:
             str -- Pixelformat
         """
-        if pix==None:
+        if pix is None:
             pix = self.camera.PixelFormat
             return pix
         else:
@@ -210,7 +206,7 @@ class Manta:
 
 
 class MantaDummy:
-
+    """Manta class for testing. It doesn't need any device connected."""
     camera = None
 
     def __init__(self, camera_id=1):
@@ -246,51 +242,11 @@ class MantaDummy:
             return self.format
         else:
             self.format = val
-    
+
     def takeSingleImg(self):
         return np.random.rand(self.height, self.width)
-    
+
     @property
     def sensorSize(self):
         return self.width, self.height
 
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-
-    def millis():
-        return int(round(time.time()*1000))
-    # print(millis())
-
-    t_steps = 20
-    img_xoffset = 0
-    img_yoffset = 0
-    img_width = 1936
-    img_height = 1216
-
-    ccd = Manta()
-
-    ccd.initialize()
-    # print(ccd.exposure())
-
-    ccd.roi_x = img_xoffset
-    ccd.roi_y = img_yoffset
-    ccd.roi_dx = img_width
-    ccd.roi_dy = img_height
-
-    trace = np.zeros((img_width,t_steps))
-    for i in range(t_steps):
-        while millis() % 36 != 0:
-            time.sleep(0.0009)
-
-        img = ccd.takeSingleImg()
-        print("image %d" % i)
-        # Project image onto a single axis
-        img_proj = np.divide(np.sum(img,0),img_height)
-        trace[:,i] = img_proj
-    
-    plt.figure()
-    plt.imshow(trace)
-    plt.show()
-
-    ccd.close()
