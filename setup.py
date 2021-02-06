@@ -1,3 +1,11 @@
+"""
+With this file setuptools can handle the installation of the package.
+
+File name: setup.py
+Author: Julian Krauth
+Date created: 2020/06/25
+Python Version: 3.7
+"""
 from setuptools import setup, find_packages
 
 setup(
