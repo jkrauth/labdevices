@@ -5,6 +5,11 @@ The IP can be set via a small wheel (S1) on the device itself.
 We used the windows software 'STF Configurator' from Applied Motion
 Products for the first configuration of the controller and to
 give it its IP address in our local subnet.
+
+File name: applied_motion_products.py
+Author: Julian Krauth
+Date created: 2020/09/02
+Python Version: 3.7
 """
 import socket
 

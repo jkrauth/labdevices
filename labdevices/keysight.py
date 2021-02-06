@@ -1,5 +1,12 @@
 """
 Module for keysight devices, like e.g. oscilloscopes.
+
+File name: keysight.py
+Author: Andres Martinez de Velasco
+Date created: 2020/11/11
+Python Version: 3.7
+"
+
 """
 from random import random
 import pyvisa as visa

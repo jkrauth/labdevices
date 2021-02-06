@@ -2,22 +2,22 @@
 Driver for the Pfeiffer Vacuum Dual Gauge TPG 362
 
 Currently only works with a USB connection.
-According to a phone call with a Pfeiffer technician, 
+According to a phone call with a Pfeiffer technician,
 the ethernet connection should work via port number 8000.
 Unfortunately this currently doesn't work. I am not sure why.
 The guy said that there were some problems with the port
 and that they were fixed with
 firmware 010500 (currently installed is 010300).
-So, in order to use the ethernet communication we might try to 
-install the latest firmware on it. 
+So, in order to use the ethernet communication we might try to
+install the latest firmware on it.
 
 File name: pfeiffer_vacuum.py
 Author: Julian Krauth
 Date created: 2020/08/25
 Python version: 3.7
 """
-import pyvisa
 import time
+import pyvisa
 
 CTRL_CHAR = {
     'ETX': chr(3), # end of text / clear input buffer
@@ -58,10 +58,10 @@ class TPG362:
     of pfeiffer.
     """
     device = None
-    
+
     def __init__(self, port='/dev/ttyUSB0'):
-        #self.addr = 'ASRL'+port+'::INSTR'
-        self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
+        self.addr = 'ASRL'+port+'::INSTR'
+        #self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
 
     def initialize(self):
         rm = pyvisa.ResourceManager()
@@ -79,9 +79,10 @@ class TPG362:
         )
 
     def close(self):
+        """Close connection to device."""
         if self.device is not None:
             self.device.close()
-        
+
     def _send_command(self, cmd):
         recv = self.device.query(cmd)
         if recv ==  CTRL_CHAR['NAK']:
@@ -104,7 +105,7 @@ class TPG362:
         time.sleep(0.1)
         just_read = self.device.read()
         return just_read
-    
+
     def idn(self):
         cmd = 'AYT'
         response = self._query(cmd).split(',')
@@ -116,8 +117,8 @@ class TPG362:
             'Hardware version': response[4],
         }
         return result
-    
-    
+
+
     def error_status(self):
         """
         Returns error status
@@ -168,14 +169,14 @@ class TPG362:
     def pressure_val_gauge2(self) -> float:
         """Returns pressure value of gauge two."""
         return self.pressure_gauge(2)[0]
-    
+
     def temperature(self) -> int:
         """Returns inner temperature of the Dual Gauge controller
         Unit is degrees celcius. Error is +-2 deg."""
         cmd = 'TMP'
         response = self._query(cmd)
         return int(response)
-        
+
 class TPG362DUMMY:
     def __init__(self, port=None):
         pass
@@ -194,7 +195,7 @@ class TPG362DUMMY:
             'Serial No.': response,
             'Firmware version': response,
             'Hardware version': response,
-        }        
+        }
         return result
 
     def error_status(self):

@@ -1,5 +1,11 @@
 """
 Module for Rohde & Schwarz devices.
+
+File name: rohde_schwarz.py
+Author: Andres Martinez de Velasco
+Date created: 2020/11/11
+Python Version: 3.7
+
 """
 from time import sleep
 

@@ -36,8 +36,8 @@ class DG645:
         'write_termination': '\n',
         'read_termination': '\r\n',
     }
-    
-    
+
+
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
         """
         Arguments:
@@ -62,7 +62,7 @@ class DG645:
         print(f'Close connection with:\n    {self.idn}')
         self.s.close()
 
-  
+
     def write(self, cmd: str) -> None:
         """Send command to device"""
         # Add write termination character and encode
@@ -71,7 +71,7 @@ class DG645:
         cmd = cmd.encode()
         # Send command
         self.s.send(cmd)
-        
+
     def query(self, cmd: str) -> str:
         """Send a request to the device and return its respons."""
         self.write(cmd)
@@ -79,12 +79,12 @@ class DG645:
         respons = respons.decode()
         # Strip off read termination character
         return respons.rstrip()
-        
+
     @property
     def idn(self) -> str:
         idn = self.query('*IDN?')
         return idn
-    
+
     def set_delay(self, channel, delay: float, reference = "T0"):
         """Set the delay of a certain channel with respect to a reference.
         Arguments:
@@ -94,21 +94,21 @@ class DG645:
         """
         if isinstance(channel, str):
             channel = self.DEFAULTS['channel'][channel]
-        
-        if isinstance(reference, str):    
+
+        if isinstance(reference, str):
             reference = self.DEFAULTS['channel'][reference]
 
         cmd = f'DLAY {channel}, {reference}, {delay}'
         self.write(cmd)
         #wait for 100 ms, this is the time it will take to write the command
         time.sleep(0.1)
-    
+
     def get_delay(self, channel) -> float:
         """Request the delay of a certain channel
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
 
-        Returns -- float, the delay in seconds. 
+        Returns -- float, the delay in seconds.
         Optionally also the reference channel.
         """
         if isinstance(channel, str):
@@ -118,7 +118,7 @@ class DG645:
         reference = respons[0]
         delay = float(respons[2:])
         return delay
-    
+
     def get_output_level(self, channel) -> float:
         """Request output amplitude of a channel
         Arguments:
@@ -133,28 +133,8 @@ class DG645:
         return respons
 
 
-class DG645DUMMY:
-    def __init__(self,  tcp, port, timeout = 0.1):
-        pass
-
-    def initialize(self):
-        print('Connected to DUMMY delay generator 645')
-        self.delay = 1
-        self.outputlevel = 2
-
-    def setDelay(self, channel, delay, reference = "T0"):
-        self.delay = delay
-
-    def getDelay(self, channel):
-        return self.delay
-
-    def getOutputLevel(self, channel):
-        return self.outputlevel
-
-# cutting = Delay_Generator_TCP('10.0.0.31', 5025)
-# picking = Delay_Generator_TCP('10.0.0.30', 5025)
-
 class DG645DUMMY(DG645):
+    """For testing purpose only. No device needed."""
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
         self.idn = 'Dummy DG645'
 
@@ -169,7 +149,7 @@ class DG645DUMMY(DG645):
 
     def query(self, cmd):
         return 'answer'
-    
+
     def set_delay(self, channel, delay: float, reference = 'T0'):
         pass
 
@@ -178,15 +158,15 @@ class DG645DUMMY(DG645):
 
     def get_output_level(self, channel):
         return float(1)
-    
+
 
 if __name__ == "__main__":
     dg = DG645('10.0.0.34', 5025)
     dg.initialize()
-    respons = dg.getDelay(2)
+    respons = dg.get_delay(2)
     print(respons)
-    dg.setDelay(2, 0.007061726)
-    respons = dg.getDelay(2)
+    dg.set_delay(2, 0.007061726)
+    respons = dg.get_delay(2)
     print(respons)
     dg.close()
-    
+
