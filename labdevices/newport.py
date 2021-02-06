@@ -1,17 +1,16 @@
 """
-Driver for the Newport motorized translation stages connected  
-to the SMC100 controller.                               
-Commands and settings for serial communication are found in 
-the SMC100 Newport Manual                     
+Driver for the Newport motorized translation stages connected
+to the SMC100 controller.
+Commands and settings for serial communication are found in
+the SMC100 Newport Manual
 
 File name: newport.py
 Author: Julian Krauth
 Date created: 2019/05/22
-Python Version: 3.7                     
+Python Version: 3.7
 """
-
-import visa
 from time import sleep
+import visa
 
 
 class SMC100:
@@ -19,7 +18,7 @@ class SMC100:
 
     It works via a USB connection.
     """
-    
+
     DEFAULTS = {
         'write_termination': '\r\n',
         'read_termination': '\r\n',
@@ -34,13 +33,14 @@ class SMC100:
     }
 
     device = None
-    
+
     def __init__(self, port, dev_number):
         self.port = port # e.g.: '/dev/ttyUSB0'
         self.dev_number = dev_number # e.g.: 1
 
-                
+
     def initialize(self):
+        """Connect to device."""
         port = 'ASRL'+self.port+'::INSTR'
         rm = visa.ResourceManager('@py')
         #rm_list = rm.list_resources()
@@ -58,27 +58,27 @@ class SMC100:
         )
 
         # make sure connection is established before doing anything else
-        sleep(0.5) 
+        sleep(0.5)
         print(f"Connected to Newport stage {self.dev_number}: {self.idn}")
 
         #err, ctrl = self.error_and_controller_status() # clears error buffer
         #print(err, ctrl)
         #print("Connected to Newport stage: %s".format(self.idn))
-        
+
     def write(self, cmd):
         cmd = f"{self.dev_number}{cmd}"
         self.device.write(cmd)
 
     def query(self, cmd):
         cmd_complete = f"{self.dev_number}{cmd}" # Add device number to command
-        
-        respons = self.device.query(cmd_complete)        
+
+        respons = self.device.query(cmd_complete)
         # response is build the following way:
-        # device_num+cmd_return+answer | cmd_return never contains the question mark
+        # dev_number+cmd_return+answer | cmd_return never contains the question mark
         dev_number = eval(respons[0])
         cmd_return = respons[1:3]
         answer = respons[3:]
-        
+
         # Check for device number and command
         if (dev_number == self.dev_number) and (cmd_return == cmd.split('?')[0]):
             return answer
@@ -86,6 +86,7 @@ class SMC100:
             raise Exception("Response contains wrong device number or wrong command.")
 
     def close(self):
+        """Close connection to device."""
         if self.device is not None:
             self.device.close()
         else:
@@ -95,15 +96,15 @@ class SMC100:
     def idn(self):
         idn = self.query("ID{}".format(self.DEFAULTS['query_termination']))
         return idn
-        
+
     def wait_move_finish(self, interval):
         """ Interval given in seconds """
         errors, status = self.error_and_controller_status()
-        while (status == self.CTRL_STATUS['moving']):
+        while status == self.CTRL_STATUS['moving']:
             errors, status = self.error_and_controller_status()
             sleep(interval)
         print("Movement finished")
-            
+
 
     def error_and_controller_status(self):
         """Returns positioner errors and controller status
@@ -120,7 +121,7 @@ class SMC100:
                   'ready from moving': 0x33,
                   'ready from disable': 0x34,
                   'ready from jogging': 0x35,}
-    
+
     def move_rel(self,distance):
         self.write(f'PR{distance}')
 
@@ -130,7 +131,7 @@ class SMC100:
         return pos
 
     def goto(self, pos):
-        self.write(f'PA{pos}')        
+        self.write(f'PA{pos}')
 
     def home(self):
         self.write('OR')
@@ -139,7 +140,7 @@ class SMC100:
         """After execution controller is in NOT REFERENCED state"""
         self.write('RS')
 
-       
+
     @property
     def speed(self):
         speed = self.query(f"VA{self.DEFAULTS['query_termination']}")
@@ -162,12 +163,12 @@ class SMC100DUMMY:
     """For testing purpose only"""
 
     device = None
-    
+
     def __init__(self, port, dev_number):
         self.dev_number = dev_number
         self.idn = '123456'
         self.pos = 0
-    
+
     def initialize(self):
         self.device = 1
         print(f"Connected to dummy Newport stage {self.dev_number}: {self.idn}")
@@ -194,14 +195,14 @@ class SMC100DUMMY:
     def wait_move_finish(self, interval):
         sleep(interval)
         print("Movement finished")
-    
+
 
 if __name__ == "__main__":
 
     print("This is the Conroller Driver example for the Newport Positioner.")
-    port = '/dev/ttyUSB0'
-    dev_id = 1
-    dev = SMC100(port, dev_id)
+    PORT = '/dev/ttyUSB0'
+    DEV_ID = 1
+    dev = SMC100(PORT, DEV_ID)
     dev.initialize()
     #Do commands here
     dev.close()
