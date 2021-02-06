@@ -8,9 +8,8 @@ Author: Julian Krauth
 Date created: 27.11.2019
 Python Version: 3.7
 """
-
+from time import sleep
 import numpy as np
-import time
 
 try:
     from plx_gpib_ethernet import PrologixGPIBEthernet
@@ -23,7 +22,8 @@ except ImportError as err:
 
 
 class SpectrumAnalyzer:
-
+    """Driver for the Ando Spectrum Analyzer. The connection is done via
+    a prologix gpib-to-ethernet adapter."""
     ando = None
 
     def __init__(
@@ -37,8 +37,9 @@ class SpectrumAnalyzer:
         """
         self.ip = ip
         self.gpib = gpib
-        
+
     def initialize(self):
+        """Open connection to device."""
         self.ando = PrologixGPIBEthernet(self.ip)
         self.ando.connect()
         self.ando.select(self.gpib)
@@ -67,19 +68,20 @@ class SpectrumAnalyzer:
     def finish(self):
         """waits till a certain task is finished"""
         while eval(self.ando.query('SWEEP?')[0])!=0:
-            time.sleep(.5)
+            sleep(.5)
 
     def sampling(self, smpl:int=None):
         """ Get/Set sampling rate"""
         if smpl is None:
             smpl = self.send_query('SMPL?')
-            return eval(smpl[0])
+            return int(smpl[0])
         elif smpl<11 or smpl>1001:
             print("Use a sampling number from 11 to 1001!")
         else:
             self.send_cmd(f'SMPL{smpl}')
 
     def close(self):
+        """Close connection to device."""
         if self.ando is not None:
             self.ando.close()
         else:
@@ -107,7 +109,7 @@ class SpectrumAnalyzer:
             axis = self.send_query('%s R%i-R%i' % (cmd,step*i+1,step*(i+1)))
             axis = axis[1:]
             axis = np.array(axis, dtype = float)
-            if i == 0: 
+            if i == 0:
                 x = axis
             else:
                 x = np.append(x,axis)
@@ -137,25 +139,25 @@ class SpectrumAnalyzer:
         return center_wavelength, bandwidth, modes
 
 
-    def ctr(self, wl:float=None):
+    def ctr(self, wavelength:float=None):
         """
         Get/Set the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
         """
-        if wl==None:
-            wl = self.send_query('CTRWL?')
-            return eval(wl[0])
+        if wavelength is None:
+            wavelength = self.send_query('CTRWL?')
+            return float(wavelength[0])
         else:
-            self.send_cmd('CTRWL%f' % (wl))
+            self.send_cmd('CTRWL%f' % (wavelength))
 
     def span(self, span:float=None):
         """
         Get/Set the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
         """
-        if span==None:
+        if span is None:
             span = self.send_query('SPAN?')
-            return eval(span[0])
+            return float(span[0])
         else:
             self.send_cmd('SPAN%f' % (span))
 
@@ -165,13 +167,13 @@ class SpectrumAnalyzer:
         0 pulsed mode
         1 cw mode
         """
-        if cw==None:
+        if cw is None:
             cw = self.send_query('CWPLS?')
-            cw = eval(cw[0])
+            cw = int(cw[0])
             return cw
-        if cw==False:
+        if not cw:
             self.send_cmd('PLMES')
-        elif cw==True:
+        elif cw:
             self.send_cmd('CLMES')
         else:
             print(cw)
@@ -179,7 +181,7 @@ class SpectrumAnalyzer:
 
     def peakHoldMode(self, time:int):
         """
-        If in pulsed mode (see cwMode method) the Ando can use three 
+        If in pulsed mode (see cwMode method) the Ando can use three
         different ways to trigger. One is the peakHoldMode, which
         needs the rough pulse repetition time.
         Unit: ms
@@ -188,7 +190,7 @@ class SpectrumAnalyzer:
 
 
 class AndoSpectrumAnalyzerDummy:
-
+    """Class for testing purpose only."""
     ando = None
 
     def __init__(
@@ -198,7 +200,7 @@ class AndoSpectrumAnalyzerDummy:
 
         self.ip = ip
         self.gpib = gpib
-        self.wl = 390
+        self.wavelength = 390
         self.span_par = 20
         self.cw = 0
 
@@ -212,11 +214,11 @@ class AndoSpectrumAnalyzerDummy:
         else:
             print('Ando dummy is already closed!')
 
-    def ctr(self, wl=None):
-        if wl is None:
-            return self.wl
+    def ctr(self, wavelength=None):
+        if wavelength is None:
+            return self.wavelength
         else:
-            self.wl = wl
+            self.wavelength = wavelength
 
     def span(self, span=None):
         if span is None:
@@ -239,7 +241,7 @@ class AndoSpectrumAnalyzerDummy:
 if __name__ == "__main__":
 
     print("This is the Conroller Driver example for the Ando Spectrometer.")
-    ando = AndoSpectrumAnalyzer()
+    ando = SpectrumAnalyzer()
     # Connect to Ando
     ando.initialize()
     # Do what you want
