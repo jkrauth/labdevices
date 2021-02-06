@@ -4,8 +4,8 @@ For communication with devices from Applied Motion Products.
 The IP can be set via a small wheel (S1) on the device itself.
 We used the windows software 'STF Configurator' from Applied Motion
 Products for the first configuration of the controller and to
-give it its IP address in our local subnet. 
-""" 
+give it its IP address in our local subnet.
+"""
 import socket
 
 # The ports for communication. We usually use UDP
@@ -21,7 +21,7 @@ HOST_PORT = 15005
 
 class STF03D:
     """Class for the STF03-D Stepper Motor Controllers."""
-    
+
     error_codes = {
         0x0000: 'No alarms',
         0x0001: 'Position Limit',
@@ -89,7 +89,7 @@ class STF03D:
             host_ip=HOST_IP,
             host_port=HOST_PORT,
             timeout=5):
-        
+
         self.ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port
@@ -136,24 +136,26 @@ class STF03D:
             return self._move_settings('DI', steps)
 
     def initialize(self):
+        """Establish connection to device."""
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.host_ip, self.host_port))
         self.sock.settimeout(self.timeout)
         print(f'Connected to rotary feedthrough with IP={self.ip}.')
 
     def close(self):
+        """Close connection to device."""
         if self.sock is not None:
             self.sock.close()
             print(f'Closed rotary feedthrough with IP={self.ip}.')
         else:
-            print(f'Device is already closed.')
+            print('Device is already closed.')
 
     def query(self, cmd: str) -> str:
         self._write(cmd)
         return self._read()
 
     def get_alarm(self) -> list:
-        """Reads back an equivalent hexadecimal value of the 
+        """Reads back an equivalent hexadecimal value of the
         Alarm Code's 16-bit binary word and translates it into
         corresponding error messages.
         """
@@ -162,7 +164,8 @@ class STF03D:
         # Convert hex string to integer
         alarm = int(respons, 16)
         error_list = []
-        if not alarm: error_list.append(self.error_codes[alarm])
+        if not alarm:
+            error_list.append(self.error_codes[alarm])
         else:
             for key, val in self.error_codes.items():
                 if key & alarm:
@@ -178,7 +181,8 @@ class STF03D:
         respons = self.query('SC')[3:]
         status = int(respons, 16)
         status_list = []
-        if not status: status_list.append(self.status_codes[status])
+        if not status:
+            status_list.append(self.status_codes[status])
         else:
             for key, val in self.status_codes.items():
                 if key & status:
@@ -186,10 +190,13 @@ class STF03D:
         return status_list
 
     def is_moving(self) -> bool:
+        """Ask for device movement status, return boolean."""
         respons = self.query('SC')[3:]
         status = int(respons, 16)
-        if 0x0010 & status: return True
-        else: return False
+        if 0x0010 & status:
+            return True
+        else:
+            return False
 
     def microstep(self, value: int=None) -> int:
         """Sets or requests the microstep resolution of the drive.
@@ -212,7 +219,7 @@ class STF03D:
         return conversion_factor
 
     def step_to_angle(self, step: int) -> float:
-        """Convert stepper motor steps into a rotation angle 
+        """Convert stepper motor steps into a rotation angle
         of the rotary feedthrough."""
         return float(step) / self.conversion_factor
 
@@ -262,7 +269,7 @@ class STF03D:
         return position
 
     def acceleration(self, value: float=None):
-        """Sets or requests the acceleration used 
+        """Sets or requests the acceleration used
         in point-to-point move commands.
         Argument:
         value -- in rps/s (a standard value is 1)
@@ -270,18 +277,18 @@ class STF03D:
         return self._move_settings('AC', value)
 
     def deceleration(self, value: float=None):
-        """Sets or requests the deceleration used 
+        """Sets or requests the deceleration used
         in point-to-point move commands
         Argument:
         value -- in rps/s (a standard value is 1)
         """
-        return self._move_settings('DE', value)        
+        return self._move_settings('DE', value)
 
     def speed(self, value: float=None):
-        """Sets or requests shaft speed for point-to-point 
+        """Sets or requests shaft speed for point-to-point
         move commands
         Argument:
-        value -- in rps (a standard value is 2)        
+        value -- in rps (a standard value is 2)
         """
         return self._move_settings('VE', value)
 
@@ -303,6 +310,7 @@ class STF03D:
 
 
 class STF03DDUMMY:
+    """Class for testing. Does not actually connect to any device."""
     def __init__(
             self,
             device_ip,
