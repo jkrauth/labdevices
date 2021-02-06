@@ -1,8 +1,8 @@
-# About the labdevices package
+# Python package for physics labdevices
 
 This python package provides simple software drivers for the easy use of typical devices found in atomic physics research labs.
 
-### Included Devices are from
+## Included Devices are from
 
 - **Allied Vision**: Manta
 - **Applied Motion Products**: STF03D
@@ -14,7 +14,7 @@ This python package provides simple software drivers for the easy use of typical
 - **Stanford Research Systems**: DG645
 - **Thorlabs**: TSP01
 
-# Installation
+## Installation
 
 It is recommended to work in a new virtual environment when installing this package.
 
@@ -30,7 +30,7 @@ where `<name>` is your environment name. The python version should be 3.6 or hig
 $ conda activate <name>
 ```
 
-##### A) For development
+### A) For development
 
 Clone the repository. From inside the package folder run
 
@@ -40,7 +40,7 @@ $ python setup.py develop
 
  Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
 
-##### B) For general use
+### B) For general use
 
 With the activated conda environment run
 
@@ -54,7 +54,7 @@ If there have been updates in the repo you then have to upgrade the installation
 $ pip install --upgrade git+https://gitlab.com/vu_rcs/lab_devices.git
 ```
 
-### Usage
+## Usage
 
 Once the labdevices package is installed into a conda environment you can simply do e.g.
 
@@ -70,7 +70,7 @@ from labdevices.thorlabs import TSP01DUMMY
 
 with DUMMY added to the device's class name.
 
-# Contributing
+## Contributing
 
 Add new drivers or improve existing ones.
 
@@ -92,13 +92,14 @@ New drivers should be tested before the changes are merged into the master branc
 
 Please keep in mind to:
 
-- stick to the [naming convention](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html). 
+- stick to the [naming convention](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html).
 - use docstrings whenever useful, according to [PEP257](https://www.python.org/dev/peps/pep-0257/).
+- for new modules always add a module header with name, author, date.
 - not include paths for saving files, VISA addresses of specific devices, etc., that should be part of your local application.
 
-# Troubleshooting
+## Troubleshooting
 
-##### Ubuntu
+### Ubuntu
 
 If you want to read a VISA address with the pyvisa package and you get the following message
 
@@ -128,7 +129,6 @@ After restarting the PC check that you are part of the usb group by typing `grou
 
 The communication with the usb device should now work.
 
-##### Ethernet devices
+### Ethernet devices
 
 If an ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
-
