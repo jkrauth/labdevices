@@ -63,16 +63,16 @@ class Manta:
             self.vimba.shutdown()
 
     @property
-    def modelName(self) -> str:
+    def model_name(self) -> str:
         name = self.camera.DeviceModelName
         return name
 
     @property
-    def packetSize(self) -> int:
+    def packet_size(self) -> int:
         return self.camera.GVSPPacketSize
 
-    @packetSize.setter
-    def packetSize(self,value:int):
+    @packet_size.setter
+    def packet_size(self, value:int):
         self.camera.GVSPPacketSize=value
 
     @property
@@ -82,7 +82,7 @@ class Manta:
         return expos*1e-6
 
     @exposure.setter
-    def exposure(self,expos: int):
+    def exposure(self, expos: int):
         self.camera.ExposureTimeAbs = expos*1e6
 
     @property
@@ -128,25 +128,25 @@ class Manta:
         self.camera.Height = val
 
     @property
-    def sensorSize(self):
+    def sensor_size(self):
         """Returns number of pixels in width and height of the sensor"""
         width = self.camera.SensorWidth
         height = self.camera.SensorHeight
         return width, height
 
     @property
-    def acquisitionMode(self):
+    def acquisition_mode(self):
         return self.camera.AcquisitionMode
 
-    @acquisitionMode.setter
-    def acquisitionMode(self, mode):
+    @acquisition_mode.setter
+    def acquisition_mode(self, mode):
         options = {'SingleFrame', 'Continuous'}
         if mode in options:
             self.camera.arm(mode)
         else:
             raise Exception(f"Value '{mode}' for acquisition mode is not valied")
 
-    def takeSingleImg(self):
+    def take_single_img(self):
         """
         Sets everything to create a single image, takes the image
         and returns it.
@@ -160,7 +160,7 @@ class Manta:
         return image
 
 
-    def trigMode(self, mode=None):
+    def trig_mode(self, mode=None):
         """Toggle Trigger Mode set by 1/0, respectively.
         Keyword Arguments:
             mode {int} -- possible values: 0, 1
@@ -175,7 +175,7 @@ class Manta:
             onoff = ['Off', 'On']
             self.camera.TriggerMode = onoff[mode]
 
-    def trigSource(self, source=None):
+    def trig_source(self, source=None):
         """Get/Select trigger source keyword arguments:
             source {str} -- Source can be one of the following strings:
                             'Freerun', 'Line1', 'Line2', 'FixedRate', 'Software'
@@ -189,7 +189,7 @@ class Manta:
             self.camera.TriggerSource = source
 
 
-    def pixFormat(self, pix=None):
+    def pix_format(self, pix=None):
         """Get/Select pixel format
         Keyword Arguments:
             pix {str} -- possible values: 'Mono8','Mono12','Mono12Packed'
@@ -230,22 +230,21 @@ class MantaDummy:
         else:
             print('Camera dummy closed!')
 
-    def trigSource(self, val=None):
+    def trig_source(self, val=None):
         if val is None:
             return self.source
         else:
             self.source = val
 
-    def pixFormat(self, val=None):
+    def pix_format(self, val=None):
         if val is None:
             return self.format
         else:
             self.format = val
 
-    def takeSingleImg(self):
+    def take_single_img(self):
         return np.random.rand(self.height, self.width)
 
     @property
-    def sensorSize(self):
+    def sensor_size(self):
         return self.width, self.height
-
