@@ -8,9 +8,10 @@ Python Version: 3.7
 
 """
 from time import sleep
-
+import re
 import numpy as np
 import pyvisa
+
 
 class FPC1000:
     """Simple spectrum analyzer.
@@ -90,6 +91,8 @@ class Oscilloscope:
         # E
         elif bool(re.match('^USB.+::INSTR$', address)):
             self.device_address = address
+        else:
+            raise ValueError("Address needs to be an IP or a valid VISA address.")
 
     def initialize(self):
         """Connect to device."""

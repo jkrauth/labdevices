@@ -34,6 +34,8 @@ class Oscilloscope:
         # E
         elif bool(re.match('^USB.+::INSTR$', address)):
             self.device_address = address
+        else:
+            raise ValueError("Address needs to be an IP or a valid VISA address.")
 
     def initialize(self):
         """Establish connection to device."""
