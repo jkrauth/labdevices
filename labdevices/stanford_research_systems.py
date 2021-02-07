@@ -47,12 +47,12 @@ class DG645:
         """
         self.tcp = tcp
         self.port = port
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.settimeout(timeout)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(timeout)
 
     def initialize(self):
         """Connect to the device."""
-        self.s.connect((self.tcp, self.port))
+        self.sock.connect((self.tcp, self.port))
         time.sleep(0.2)
         print('bla')
         print(f'Connected to:\n    {self.idn}')
@@ -60,7 +60,7 @@ class DG645:
     def close(self):
         """Closing connection with the device"""
         print(f'Close connection with:\n    {self.idn}')
-        self.s.close()
+        self.sock.close()
 
 
     def write(self, cmd: str) -> None:
@@ -70,12 +70,12 @@ class DG645:
         cmd += termination_char
         cmd = cmd.encode()
         # Send command
-        self.s.send(cmd)
+        self.sock.send(cmd)
 
     def query(self, cmd: str) -> str:
         """Send a request to the device and return its respons."""
         self.write(cmd)
-        respons = self.s.recv(256)
+        respons = self.sock.recv(256)
         respons = respons.decode()
         # Strip off read termination character
         return respons.rstrip()
@@ -163,10 +163,9 @@ class DG645DUMMY(DG645):
 if __name__ == "__main__":
     dg = DG645('10.0.0.34', 5025)
     dg.initialize()
-    respons = dg.get_delay(2)
-    print(respons)
+    delay1 = dg.get_delay(2)
+    print(delay1)
     dg.set_delay(2, 0.007061726)
-    respons = dg.get_delay(2)
-    print(respons)
+    delay2 = dg.get_delay(2)
+    print(delay2)
     dg.close()
-
