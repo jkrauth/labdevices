@@ -8,7 +8,7 @@ The C/C++ libraries are provided by Allied Vision under the
 name 'Vimba'.
 Tested with version: Vimba 3.0
 
-The camera originally is set to
+The camera's default settings are
 IP Config Mode: Auto IP config mode
 Gateway: 192.168.2.254
 IP: 192.168.2.21

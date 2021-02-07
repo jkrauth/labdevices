@@ -132,3 +132,8 @@ The communication with the usb device should now work.
 ### Ethernet devices
 
 If an ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
+
+## Contact
+
+- Repo owner:  Julian Krauth, j.krauth@vu.nl
+- Institution: Vrije Universiteit Amsterdam, Faculty of Sciences, The Netherlands
