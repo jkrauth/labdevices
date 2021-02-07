@@ -70,20 +70,7 @@ class FPC1000:
         respons = self.device.query('SYST:ERR:ALL?')
         return respons
 
-rm = pyvisa.ResourceManager()
-# rm_list = rm.list_resources()
-
-usb_dict = {
-    'R&S RTB2004 0':    'USB0::0x0AAD::0x01D6::111290::INSTR',
-    'R&S RTB2004 1':    'USB0::0x0AAD::0x01D6::111287::0::INSTR',
-    'R&S RTB2004 2':    'USB0::0x0AAD::0x01D6::111280::INSTR',}
-
-IP_dict = {
-    'R&S RTB2004 0':    '10.0.0.80',
-    'R&S RTB2004 1':    '10.0.0.81',
-    'R&S RTB2004 2':    '10.0.0.82',}
-
-conn_types = ['usb', 'ethernet']
+RM = pyvisa.ResourceManager()
 
 class Oscilloscope:
     """
@@ -91,25 +78,24 @@ class Oscilloscope:
     models:
 
     """
-    def __init__(self, instrument: str, connection_type: str):
+    def __init__(self, address: str):
         """
         Arguments:
-        instrument -- str, Device Name from DICT
-        connection_type -- str, 'USB' or 'ethernet'
+        address -- str, VISA address for USB connection or IP for Ethernet.
         """
-        self.instrument = instrument
         self.device = None
-        if connection_type == conn_types[0]:
-            self.device_address = usb_dict[self.instrument]
-        elif connection_type == conn_types[1]:
-            device_ip_address = IP_dict[self.instrument]
-            self.device_address = (f'TCPIP::{device_ip_address}::INSTR')
+        # Check if address has IP pattern:
+        if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
+            self.device_address = (f'TCPIP::{address}::INSTR')
+        # E
+        elif bool(re.match('^USB.+::INSTR$', address)):
+            self.device_address = address
 
     def initialize(self):
         """Connect to device."""
         #rm_list = rm.list_resources()
 
-        self.device = rm.open_resource(self.device_address)
+        self.device = RM.open_resource(self.device_address)
         print(f"Connected to:\n{self.idn}")
 
 
