@@ -75,7 +75,7 @@ class SMC100:
         respons = self.device.query(cmd_complete)
         # response is build the following way:
         # dev_number+cmd_return+answer | cmd_return never contains the question mark
-        dev_number = eval(respons[0])
+        dev_number = int(respons[0])
         cmd_return = respons[1:3]
         answer = respons[3:]
 
