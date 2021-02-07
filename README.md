@@ -20,22 +20,22 @@ It is recommended to work in a new virtual environment when installing this pack
 
 Create a conda environment as
 
-```
-$ conda create -n <name> python=3.6
+```console
+conda create -n <name> python=3.6
 ```
 
 where `<name>` is your environment name. The python version should be 3.6 or higher. Then activate the environment with
 
-```
-$ conda activate <name>
+```console
+conda activate <name>
 ```
 
 ### A) For development
 
 Clone the repository. From inside the package folder run
 
-```
-$ python setup.py develop
+```console
+python setup.py develop
 ```
 
  Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
@@ -44,14 +44,14 @@ $ python setup.py develop
 
 With the activated conda environment run
 
-```
-$ pip install git+https://gitlab.com/vu_rcs/lab_devices.git
+```console
+pip install git+https://gitlab.com/vu_rcs/lab_devices.git
 ```
 
 If there have been updates in the repo you then have to upgrade the installation with:
 
-```
-$ pip install --upgrade git+https://gitlab.com/vu_rcs/lab_devices.git
+```console
+pip install --upgrade git+https://gitlab.com/vu_rcs/lab_devices.git
 ```
 
 ## Usage
@@ -107,21 +107,21 @@ If you want to read a VISA address with the pyvisa package and you get the follo
 
 the issue is related to the permissions regarding the [udev rules](https://www.thegeekdiary.com/beginners-guide-to-udev-in-linux/). If you don't have permission to write on USB devices you will not be able to communicate properly with the device. To solve this problem  (see also [here](http://manpages.ubuntu.com/manpages/bionic/man3/Device::USB::FAQ.3pm.html)) you have to create a group with the name *usb* by
 
-```
+```console
 addgroup --system usb
 ```
 
 Next, add your user to that group by
 
-```
+```console
 sudo adduser <user> usb
 ```
 
-where <user> is your ubuntu username, which is also shown in the terminal at the beginning of each line.
+where `<user>` is your ubuntu username, which is also shown in the terminal at the beginning of each line.
 
 Create a file in /etc/udev/rules.d/ with the name `50-myusb.rules` (if it does not exist yet) and add the following line
 
-```
+```console
 SUBSYSTEM=="usb", MODE="0666", GROUP="usb"
 ```
 
