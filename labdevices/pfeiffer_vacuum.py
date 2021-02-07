@@ -178,6 +178,7 @@ class TPG362:
         return int(response)
 
 class TPG362DUMMY:
+    """For testing purpose. No devices needed."""
     def __init__(self, port=None):
         pass
 
