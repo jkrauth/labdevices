@@ -15,7 +15,7 @@ try:
     from plx_gpib_ethernet import PrologixGPIBEthernet
 except ImportError as err:
     print(
-        "Can't import PrologixGPIBEthernet module for ANDO Spectrometer!\n" +
+        "Can't import PrologixGPIBEthernet module for ando.SpectrumAnalyzer!\n" +
         "Install plx_gpib_ethernet package from: \n" +
         "https://github.com/nelsond/prologix-gpib-ethernet"
     )
@@ -67,7 +67,7 @@ class SpectrumAnalyzer:
 
     def finish(self):
         """waits till a certain task is finished"""
-        while eval(self.ando.query('SWEEP?')[0])!=0:
+        while int(self.ando.query('SWEEP?')[0])!=0:
             sleep(.5)
 
     def sampling(self, smpl:int=None):
@@ -161,7 +161,7 @@ class SpectrumAnalyzer:
         else:
             self.send_cmd('SPAN%f' % (span))
 
-    def cwMode(self, cw:bool=None):
+    def cw_mode(self, cw:bool=None):
         """
         Get/Set measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
@@ -179,7 +179,7 @@ class SpectrumAnalyzer:
             print(cw)
             print("ANDO mode number has to be either 0 or 1!")
 
-    def peakHoldMode(self, time:int):
+    def peak_hold_mode(self, time:int):
         """
         If in pulsed mode (see cwMode method) the Ando can use three
         different ways to trigger. One is the peakHoldMode, which
@@ -189,7 +189,7 @@ class SpectrumAnalyzer:
         self.send_cmd(f'PKHLD{time}')
 
 
-class AndoSpectrumAnalyzerDummy:
+class SpectrumAnalyzerDummy:
     """Class for testing purpose only."""
     ando = None
 
@@ -226,13 +226,13 @@ class AndoSpectrumAnalyzerDummy:
         else:
             self.span_par = span
 
-    def cwMode(self, cw=None):
+    def cw_mode(self, cw=None):
         if cw is None:
             return self.cw
         else:
             self.cw = cw
 
-    def peakHoldMode(self, time):
+    def peak_hold_mode(self, time):
         pass
 
 

@@ -121,24 +121,24 @@ class Oscilloscope:
         idn = self.query("*IDN?")
         return idn
 
-    def V_avg(self,channel: int):
+    def get_volt_avg(self,channel: int):
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN MEAN")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
 
-    def V_max(self,channel: int):
+    def get_volt_max(self,channel: int):
 
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN UPEakvalue")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-    def VPP(self, channel: int):
+    def get_volt_peakpeak(self, channel: int):
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN PEAK")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-    def Trace(self, channel: int):
+    def get_trace(self, channel: int):
         print(f'acquiring trace for channel {channel+1}')
         self.write(f'CHANnel{channel}:SINGle')
         voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
@@ -152,7 +152,9 @@ class Oscilloscope:
         return trace, voltage
 
     def screen_shot(self):
-        # self.write('HCOPy:CWINdow ON') this closes all windows when taking screen shot so signal can be seen.
+        """Takes a screenshot of the scope display."""
+        # self.write('HCOPy:CWINdow ON') this closes all windows
+        # when taking screen shot so signal can be seen.
         # set format
         self.write('HCOPy:LANG PNG')
         image_bytes = self.ieee_query('HCOPy:DATA?')

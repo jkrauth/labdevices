@@ -65,18 +65,18 @@ class Oscilloscope:
     def set_t_scale(self,cmd):
         self.write(f":TIMebase:SCALe {cmd}")
 
-    def V_avg(self, channel):
+    def get_volt_avg(self, channel):
         self.write(f":MEASure:SOURce CHANnel{channel}")
         result = self.query(":MEASure:VAVerage?")
         return float(result)
 
-    def V_max(self, channel):
+    def get_volt_max(self, channel):
         self.write(f":MEASure:SOURce CHANnel{channel}")
         result = self.query(":MEASure:VMAX?")
         return float(result)
 
 
-    def VPP(self, channel):
+    def get_volt_peakpeak(self, channel):
         self.write(f":MEASure:SOURce {channel}")
         result = self.query(":MEASure:VPP?")
         return float(result)
@@ -95,7 +95,7 @@ class Oscilloscope:
             self.device.before_close()
             self.device.close()
 
-    def Trace(self, channel):
+    def get_trace(self, channel):
 
         self.device.timeout = 10000
         self.write(':ACQuire:TYPE NORMal')
@@ -132,11 +132,13 @@ class Oscilloscope:
 
         n_length = len(data_bytes)
 
-        voltage_conversion = lambda x: (float(x) - float(y_reference)) * float(y_increment) + float(y_origin)
+        voltage_conversion = lambda x: (float(x) - float(y_reference)) * float(y_increment) \
+            + float(y_origin)
+
         voltage = [voltage_conversion(i) for i in data_bytes]
 
-        x_min = eval(x_origin)
-        step_size = eval(x_increment)
+        x_min = float(x_origin)
+        step_size = float(x_increment)
         x_max = (x_min+(n_length*step_size))
         time_val = np.arange(x_min, x_max, step_size)
         self.write(f':TIMebase:SCALe {time_scale}') #set time scale back to normal
@@ -155,17 +157,16 @@ class OscilloscopeDummy:
     def finalize(self):
         print("Closing dummy device")
 
-    def V_avg(self, channel):
+    def get_volt_avg(self, channel):
         self.result = self.result + random()*10
         return self.result
 
-    def V_max(self, channel):
+    def get_volt_max(self, channel):
         self.result = self.result + 1
         return self.result
 
-    def VPP(self, channel):
-        self.VPP_result = random()* 10
-        return self.VPP_result
+    def get_volt_peakpeak(self, channel):
+        return random()* 10
 
     def set_t_scale(self, time):
         pass
@@ -176,7 +177,7 @@ class OscilloscopeDummy:
     def close(self):
         pass
 
-    def Trace(self, trace_channel, trace_write_file):
+    def get_trace(self, trace_channel, trace_write_file):
         x = self.result + random()*10
         y = self.result + random()*10
         print('dummy trace acquired')
