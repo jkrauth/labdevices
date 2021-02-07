@@ -64,6 +64,7 @@ class TPG362:
         #self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
 
     def initialize(self):
+        """Connect to device."""
         rm = pyvisa.ResourceManager()
         self.device = rm.open_resource(
             self.addr,
@@ -83,7 +84,7 @@ class TPG362:
         if self.device is not None:
             self.device.close()
 
-    def _send_command(self, cmd):
+    def _send_command(self, cmd: str):
         recv = self.device.query(cmd)
         if recv ==  CTRL_CHAR['NAK']:
             message = 'Serial communication returned negative acknowledge'
@@ -94,7 +95,7 @@ class TPG362:
         data = self.device.query(CTRL_CHAR['ENQ'])
         return data
 
-    def _query(self, cmd):
+    def _query(self, cmd: str):
         self._send_command(cmd)
         data = self._get_data()
         _ = self._clear_output_buffer()
