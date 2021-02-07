@@ -1,4 +1,4 @@
-# Python package for physics labdevices
+# labdevices
 
 This python package provides simple software drivers for the easy use of typical devices found in atomic physics research labs.
 

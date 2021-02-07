@@ -20,13 +20,12 @@ Author: Julian Krauth
 Date created: 2019/11/14
 Python Version: 3.7
 """
-import time
 import numpy as np
 import pymba
 
 class Manta:
     """
-    Driver class for Allied Vision Manta Cameras.
+    Driver class for the GigE Allied Vision Manta Cameras.
     """
 
     camera = None
