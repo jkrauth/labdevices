@@ -10,7 +10,7 @@ Date created: 2019/05/22
 Python Version: 3.7
 """
 from time import sleep
-import visa
+import pyvisa as visa
 
 
 class SMC100:
