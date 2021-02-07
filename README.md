@@ -1,24 +1,26 @@
 # labdevices
 
-This python package provides simple software drivers for the easy use of typical devices found in atomic physics research labs.
+The goal of this python package is to provide simple software drivers for the use of typical devices found in atomic physics research labs.
+
+This package is in an early stage. Every contribution to improve and extend it is welcome.
 
 ## Included Devices are from
 
-- **Allied Vision**: Manta
-- **Applied Motion Products**: STF03D
-- **ANDO**: SpectrumAnalyzer
-- **Keysight**: ?
-- **Newport**: SMC100
-- **Pfeiffer Vacuum**: TPG362
-- **Rohde & Schwarz**: FPC1000, ?
-- **Stanford Research Systems**: DG645
-- **Thorlabs**: TSP01
+- **Allied Vision**: Manta cameras
+- **Applied Motion Products**: Stepper Motor controller STF03D
+- **ANDO**: Spectrum Analyzer AQ-6315A/B
+- **Keysight**: Oscilloscope 3000T X-Series
+- **Newport**: Positioner Controller SMC100
+- **Pfeiffer Vacuum**: Gauge TPG362
+- **Rohde & Schwarz**: Spectrum Analyzer FPC1000, Oscilloscope ?
+- **Stanford Research Systems**: Delay Generator DG645
+- **Thorlabs**: Temperature Sensor TSP01
 
 ## Installation
 
 It is recommended to work in a new virtual environment when installing this package.
 
-Create a conda environment as
+Create e.g. a conda virtual environment as
 
 ```console
 conda create -n <name> python=3.6
@@ -45,13 +47,13 @@ python setup.py develop
 With the activated conda environment run
 
 ```console
-pip install git+https://gitlab.com/vu_rcs/lab_devices.git
+pip install https://github.com/jkrauth/labdevices.git
 ```
 
-If there have been updates in the repo you then have to upgrade the installation with:
+If there have been updates in the repo you then can upgrade the installation with:
 
 ```console
-pip install --upgrade git+https://gitlab.com/vu_rcs/lab_devices.git
+pip install --upgrade https://github.com/jkrauth/labdevices.git
 ```
 
 ## Usage
@@ -117,9 +119,9 @@ Next, add your user to that group by
 sudo adduser <user> usb
 ```
 
-where `<user>` is your ubuntu username, which is also shown in the terminal at the beginning of each line.
+where `<user>` is your Ubuntu user name, which is also shown in the terminal at the beginning of each line.
 
-Create a file in /etc/udev/rules.d/ with the name `50-myusb.rules` (if it does not exist yet) and add the following line
+Create a file in `/etc/udev/rules.d/` with the name `50-myusb.rules` (if it does not exist yet) and add the following line
 
 ```console
 SUBSYSTEM=="usb", MODE="0666", GROUP="usb"
@@ -131,7 +133,7 @@ The communication with the usb device should now work.
 
 ### Ethernet devices
 
-If an ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
+If an Ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
 
 ## Contact
 
