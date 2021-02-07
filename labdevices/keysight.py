@@ -9,45 +9,31 @@ Python Version: 3.7
 
 """
 from random import random
+import re
 import pyvisa as visa
 import numpy as np
 
 rm = visa.ResourceManager()
 # rm_list = rm.list_resources()
 
-usb_dict = {
-    'Keysight 3034T':   'USB0::0x2A8D::0x1760::MY55280218::0::INSTR',
-    'Keysight 3054T':   '',
-    'Keysight 3024T 0': '',
-    'Keysight 3024T 1': '',}
-
-IP_dict = {
-    'Keysight 3034T':   '10.0.0.84',
-    'Keysight 3054T':   '10.0.0.85',
-    'Keysight 3024T 0': '10.0.0.86',
-    'Keysight 3024T 1': '10.0.0.87',
-
-}
-conn_types = ['usb', 'ethernet']
 
 class Oscilloscope:
     """
     Class for Keysight oscilloscopes. So far tested with models:
     ...
     """
-    def __init__(self, instrument: str, connection_type: str):
+    def __init__(self, address: str):
         """
         Arguments:
-        instrument -- str, Device Name from DICT
-        connection_type -- str, 'USB' or 'ethernet'
+        address -- str, VISA address for USB connection or IP for Ethernet.
         """
         self.device = None
-        print(connection_type)
-        if connection_type == conn_types[0]:
-            self.device_address = usb_dict[instrument]
-        elif connection_type == conn_types[1]:
-            device_ip_address = IP_dict[instrument]
-            self.device_address = (f'TCPIP::{device_ip_address}::INSTR')
+        # Check if address has IP pattern:
+        if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
+            self.device_address = (f'TCPIP::{address}::INSTR')
+        # E
+        elif bool(re.match('^USB.+::INSTR$', address)):
+            self.device_address = address
 
     def initialize(self):
         """Establish connection to device."""
