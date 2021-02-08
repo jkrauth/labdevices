@@ -2,10 +2,9 @@
 Module for keysight devices, like e.g. oscilloscopes.
 
 File name: keysight.py
-Author: Andres Martinez de Velasco
+Author: Julian Krauth, Andres Martinez de Velasco
 Date created: 2020/11/11
 Python Version: 3.7
-"
 
 """
 from random import random
@@ -29,10 +28,10 @@ class Oscilloscope:
         """
         self.device = None
         # Check if address has IP pattern:
-        if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
+        if bool(re.match(r'^\d+\.\d+\.\d+\.\d+$', address)):
             self.device_address = (f'TCPIP::{address}::INSTR')
         # E
-        elif bool(re.match('^USB.+::INSTR$', address)):
+        elif bool(re.match(r'^USB.+::INSTR$', address)):
             self.device_address = address
         else:
             raise ValueError("Address needs to be an IP or a valid VISA address.")
