@@ -139,3 +139,4 @@ If an Ethernet device is not recognized, check its settings. Usually a fixed IP 
 
 - Repo owner:  Julian Krauth, j.krauth@vu.nl
 - Institution: Vrije Universiteit Amsterdam, Faculty of Sciences, The Netherlands
+- MIT License, see file `LICENSE.md`
