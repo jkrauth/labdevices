@@ -20,26 +20,56 @@ class SMC100:
     """
 
     DEFAULTS = {
-        'write_termination': '\r\n',
-        'read_termination': '\r\n',
-        'encoding': 'ascii',
-        'baudrate': 921600,
-        'timeout': 100,
-        'parity': visa.constants.Parity.none,
-        'data_bits': 8,
-        'stop_bits': visa.constants.StopBits.one,
-        'flow_control': visa.constants.VI_ASRL_FLOW_XON_XOFF,
-        'query_termination': '?',
+        'write_termination':    '\r\n',
+        'read_termination':     '\r\n',
+        'encoding':             'ascii',
+        'baudrate':             921600,
+        'timeout':              100,
+        'parity':               visa.constants.Parity.none,
+        'data_bits':            8,
+        'stop_bits':            visa.constants.StopBits.one,
+        'flow_control':         visa.constants.VI_ASRL_FLOW_XON_XOFF,
+        'query_termination':    '?',
     }
 
-    device = None
+    CTRL_STATUS = {
+        'configuration':      0x14,
+        'moving':             0x28,
+        'ready from homing':  0x32,
+        'ready from moving':  0x33,
+        'ready from disable': 0x34,
+        'ready from jogging': 0x35,
+    }
+
+    ERROR_CODE = {
+        'A': 'Unknown message code or floating point controller address',
+        'B': 'Controller address not correct',
+        'C': 'Parameter missing or out of range',
+        'D': 'Execution not allowed',
+        'E': 'Home sequence already started',
+        'F': 'ESP stage name unknown',
+        'G': 'Displacement out of limits',
+        'H': 'Execution not allowed in NOT REFERENCED state',
+        'I': 'Execution not allowed in CONFIGURATION state',
+        'J': 'Execution not allowed in DISABLE state',
+        'K': 'Execution not allowed in READY state',
+        'L': 'Execution not allowed in HOMING state',
+        'M': 'Execution not allowed in MOVING state',
+        'N': 'Current position out of software limit',
+        'S': 'Communication Time Out',
+        'U': 'Error during EEPROM access',
+        'V': 'Error during command execution',
+        'W': 'Command not allowed for SMC100PP version',
+        'X': 'Command not allowed for CC version',
+    }
 
     def __init__(self, port, dev_number):
         self.port = port # e.g.: '/dev/ttyUSB0'
         self.dev_number = dev_number # e.g.: 1
+        self.device = None
 
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Connect to device."""
         port = 'ASRL'+self.port+'::INSTR'
         rm = visa.ResourceManager('@py')
@@ -65,46 +95,40 @@ class SMC100:
         #print(err, ctrl)
         #print("Connected to Newport stage: %s".format(self.idn))
 
-    def write(self, cmd):
+    def write(self, cmd: str):
         cmd = f"{self.dev_number}{cmd}"
         self.device.write(cmd)
 
-    def query(self, cmd):
-        cmd_complete = f"{self.dev_number}{cmd}" # Add device number to command
+    def query(self, cmd: str):
+        # Add device number to command
+        cmd_complete = f"{self.dev_number}{cmd}"
 
         respons = self.device.query(cmd_complete)
-        # response is build the following way:
+        # respons is build the following way:
         # dev_number+cmd_return+answer | cmd_return never contains the question mark
         dev_number = int(respons[0])
         cmd_return = respons[1:3]
         answer = respons[3:]
 
-        # Check for device number and command
-        if (dev_number == self.dev_number) and (cmd_return == cmd.split('?')[0]):
-            return answer
-        else:
-            raise Exception("Response contains wrong device number or wrong command.")
+        return answer
 
     def close(self):
         """Close connection to device."""
         if self.device is not None:
             self.device.close()
-        else:
-            print('Newport device is already closed')
+            return
+        print('Newport device is already closed')
 
     @property
     def idn(self):
         idn = self.query("ID{}".format(self.DEFAULTS['query_termination']))
         return idn
 
-    def wait_move_finish(self, interval):
+    def wait_move_finish(self, interval: float):
         """ Interval given in seconds """
-        errors, status = self.error_and_controller_status()
-        while status == self.CTRL_STATUS['moving']:
-            errors, status = self.error_and_controller_status()
+        while self.error_and_controller_status()[1] == self.CTRL_STATUS['moving']:
             sleep(interval)
         print("Movement finished")
-
 
     def error_and_controller_status(self):
         """Returns positioner errors and controller status
@@ -115,31 +139,34 @@ class SMC100:
         controller_state = int(respons[4:6],16) # conv hex string to int
         return positioner_errors, controller_state
 
-    CTRL_STATUS = {'configuration': 0x14,
-                  'moving': 0x28,
-                  'ready from homing': 0x32,
-                  'ready from moving': 0x33,
-                  'ready from disable': 0x34,
-                  'ready from jogging': 0x35,}
-
-    def move_rel(self,distance):
+    def move_rel(self, distance: float):
+        """Move stage to new relative position.
+        Arguments:
+        distance -- in the stage's units.
+        """
         self.write(f'PR{distance}')
+
+    def move_abs(self, position: float):
+        """Move stage to new absolute position.
+        Arguments:
+        position -- in the stage's units.
+        """
+        self.write(f'PA{position}')
 
     @property
     def position(self):
+        """Get current position of stage."""
         pos = self.query(f"PA{self.DEFAULTS['query_termination']}")
         return pos
-
-    def goto(self, pos):
-        self.write(f'PA{pos}')
 
     def home(self):
         self.write('OR')
 
     def reset(self):
-        """After execution controller is in NOT REFERENCED state"""
+        """Resetting the controller.
+        After execution controller is in NOT REFERENCED state
+        """
         self.write('RS')
-
 
     @property
     def speed(self):
@@ -147,7 +174,7 @@ class SMC100:
         return speed
 
     @speed.setter
-    def speed(self, value):
+    def speed(self, value: float):
         self.write(f'VA{value}')
 
     @property
@@ -156,7 +183,7 @@ class SMC100:
         return accel
 
     @acceleration.setter
-    def acceleration(self, value):
+    def acceleration(self, value: float):
         self.write(f'AC{value}')
 
 class SMC100DUMMY:
@@ -179,7 +206,10 @@ class SMC100DUMMY:
     def query(self, cmd):
         return 1
 
-    def goto(self, pos):
+    def move_rel(self, distance: float):
+        self.pos += distance
+
+    def move_abs(self, pos: float):
         self.pos = pos
 
     @property
