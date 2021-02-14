@@ -42,6 +42,7 @@ class SMC100:
     }
 
     ERROR_CODE = {
+        '@': 'No error',
         'A': 'Unknown message code or floating point controller address',
         'B': 'Controller address not correct',
         'C': 'Parameter missing or out of range',
@@ -63,9 +64,14 @@ class SMC100:
         'X': 'Command not allowed for CC version',
     }
 
-    def __init__(self, port, dev_number):
-        self.port = port # e.g.: '/dev/ttyUSB0'
-        self.dev_number = dev_number # e.g.: 1
+    def __init__(self, port: str, dev_number: int=1):
+        """
+        Arguments:
+        port -- address of device, e.g. /dev/ttyUSB0
+        dev_number -- if SMC100 is not chained, this is typically 1.
+        """
+        self.port = port
+        self.dev_number = dev_number
         self.device = None
 
 
@@ -99,7 +105,7 @@ class SMC100:
         cmd = f"{self.dev_number}{cmd}"
         self.device.write(cmd)
 
-    def query(self, cmd: str):
+    def query(self, cmd: str) -> str:
         # Add device number to command
         cmd_complete = f"{self.dev_number}{cmd}"
 
@@ -124,9 +130,16 @@ class SMC100:
         idn = self.query("ID{}".format(self.DEFAULTS['query_termination']))
         return idn
 
+    @property
+    def is_moving(self) -> bool:
+        moving = self.CTRL_STATUS['moving']
+        return self.error_and_controller_status()[1] == moving
+
     def wait_move_finish(self, interval: float):
-        """ Interval given in seconds """
-        while self.error_and_controller_status()[1] == self.CTRL_STATUS['moving']:
+        """
+        Arguments:
+        interval -- in seconds"""
+        while self.is_moving:
             sleep(interval)
         print("Movement finished")
 
@@ -138,6 +151,16 @@ class SMC100:
         positioner_errors = respons[0:4]
         controller_state = int(respons[4:6],16) # conv hex string to int
         return positioner_errors, controller_state
+
+    def get_last_command_error(self):
+        """When a command is not executable, an error will be memorized.
+        This error can be read with this command.
+        The error buffer then gets erased.
+        The meaning of the error code can be translated with self.ERROR_CODE.
+        """
+        respons = self.query('TE')
+        return respons
+        
 
     def move_rel(self, distance: float):
         """Move stage to new relative position.
