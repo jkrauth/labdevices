@@ -232,8 +232,8 @@ class SMC100DUMMY:
     def move_rel(self, distance: float):
         self.pos += distance
 
-    def move_abs(self, pos: float):
-        self.pos = pos
+    def move_abs(self, position: float):
+        self.pos = position
 
     @property
     def position(self):
