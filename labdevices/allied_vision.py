@@ -243,7 +243,7 @@ class MantaDummy:
             self.format = val
 
     def take_single_img(self):
-        return np.random.rand(self.height, self.width)
+        return 255*np.random.rand(self.height, self.width)
 
     @property
     def sensor_size(self):
