@@ -1,5 +1,5 @@
 """
-With this file setuptools can handle the installation of the package.
+With this file setuptools and pip can handle the installation of the package.
 
 File name: setup.py
 Author: Julian Krauth
@@ -14,13 +14,12 @@ setup(
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=[
-        'pyyaml',                 # for ALLIED_VISION
-        'numpy',                  # for ANDO, ALLIED_VISION
-        'pymba',                  # for ALLIED_VISION
-        #'prologix-gpib-ethernet', # for ANDO
-        'pyvisa',                 # for NEWPORT
-        'pyvisa-py',              # needed for pyvisa
-        'pyusb',                  # needed for pyvisa
+        'pyyaml',
+        'numpy',
+        'pymba',
+        'pyvisa',
+        'pyvisa-py',
+        'pyusb',
     ],
     # For modules which have no entry in pypi.org, dependency
     # links have to be provided. They exist of a link to the
