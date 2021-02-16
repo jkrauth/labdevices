@@ -18,6 +18,8 @@ This package is in an early stage. Every contribution to improve and extend it i
 
 ## Installation
 
+Dependencies are installed automatically. The only exception is the [prologix-gpib-ethernet](https://github.com/nelsond/prologix-gpib-ethernet) package that has to be installed manually. It is only needed for the use of the ANDO Spectrum Analyzer.
+
 It is recommended to work in a new virtual environment when installing this package.
 
 Create e.g. a conda virtual environment as
