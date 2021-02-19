@@ -88,25 +88,37 @@ STEPS_PER_TURN = {
 class STF03D:
     """Class for the STF03-D Stepper Motor Controllers."""
 
+    _header = bytes([0x00, 0x007])
+    _tail = bytes([0xD])
 
-    def __init__(
-            self,
-            device_ip,
-            host_ip=HOST_IP,
-            host_port=HOST_PORT,
-            timeout=5):
-
+    def __init__(self, device_ip: str, calibration: float,
+        host_ip: str=HOST_IP,
+        host_port: int=HOST_PORT,
+        timeout: float=5):
+        """
+        Arguments:
+        device_ip   -- IP address of device
+        calibration -- units per full turn of the stepper motor (gear ratio).
+                       Example:
+                       For a rotation stage with gear ratio 1/96 the
+                       conversion factor into degrees would be 360/96,
+                       For a linear stage it would be the lead value of the screw.
+        host_ip     -- IP address of host, can be 0.0.0.0
+        host_port   -- Port used by host
+        timeout     -- in seconds
+        """
         self.ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port
         self.timeout = timeout
         self._device = None
 
+        # This is the calibration and it has to be set self.set_calibration()
+        self._units_per_motor_turn = calibration
+
     def _write(self, cmd: str):
         """Send a message with the correct header and end characters"""
-        header = bytes([0x00, 0x007])
-        end = bytes([0xD])
-        to_send = header + cmd.encode() + end
+        to_send = self._header + cmd.encode() + self._tail
         self._device.sendto(to_send, (self.ip, UDP_PORT))
 
     def _read(self) -> str:
@@ -116,29 +128,33 @@ class STF03D:
         respons = respons_raw.decode()
         return respons[2:-1]
 
-    def _move_settings(self, cmd: str, value: None):
+    def _query(self, cmd: str) -> str:
+        self._write(cmd)
+        return self._read()
+
+    def _move_settings(self, cmd: str, value: None) -> str:
         """Base function for the set/get functionality
         of the speed setting functions."""
         if value is None:
-            respons = self.query(cmd)[3:]
+            respons = self._query(cmd)[3:]
             return respons
         else:
             cmd = cmd + str(value)
-            return self.query(cmd)
+            return self._query(cmd)
 
-    def _distance_or_position(self, angle: float=None):
+    def _distance_or_position(self, value: float=None):
         """Set or request the distance by which the motor moves after sending
         a relative move command, or the position to which the motor
         moves after sending an absolute move command.
-        angle -- in degrees.
+        value -- in units as defined by the calibration.
         """
-        if angle is None:
+        if value is None:
             steps = int(self._move_settings('DI', None))
-            angle = self.step_to_angle(steps)
-            return angle
+            value = self._step_to_unit(steps)
+            return value
         else:
-            steps = self.angle_to_step(angle)
-            print(f'Move by/to {angle} degrees, equiv. to {steps} steps.')
+            steps = self._unit_to_step(value)
+            print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
             return self._move_settings('DI', steps)
 
     def initialize(self):
@@ -150,15 +166,12 @@ class STF03D:
 
     def close(self):
         """Close connection to device."""
-        if self._device is not None:
-            self._device.close()
-            print(f'Closed rotary feedthrough with IP={self.ip}.')
-        else:
+        if self._device is None:
             print('Device is already closed.')
+            return
+        self._device.close()
+        print(f'Closed rotary feedthrough with IP={self.ip}.')
 
-    def query(self, cmd: str) -> str:
-        self._write(cmd)
-        return self._read()
 
     def get_alarm(self) -> list:
         """Reads back an equivalent hexadecimal value of the
@@ -166,7 +179,7 @@ class STF03D:
         corresponding error messages.
         """
         # Strip off the 'AL=' prefix
-        respons = self.query('AL')[3:]
+        respons = self._query('AL')[3:]
         # Convert hex string to integer
         alarm = int(respons, 16)
         error_list = []
@@ -184,7 +197,7 @@ class STF03D:
         corresponding status messages.
         """
         # Strip off the 'SC=' prefix
-        respons = self.query('SC')[3:]
+        respons = self._query('SC')[3:]
         status = int(respons, 16)
         status_list = []
         if not status:
@@ -197,44 +210,41 @@ class STF03D:
 
     def is_moving(self) -> bool:
         """Ask for device movement status, return boolean."""
-        respons = self.query('SC')[3:]
+        respons = self._query('SC')[3:]
         status = int(respons, 16)
-        if 0x0010 & status:
-            return True
-        else:
-            return False
+        return bool(0x0010 & status)
 
-    def microstep(self, value: int=None) -> int:
+    def get_microstep(self) -> int:
+        """Requests the microstep resolution of the drive."""
+        respons = self._move_settings('MR', None)
+        return int(respons)
+
+    def set_microstep(self, value: int=3) -> None:
         """Sets or requests the microstep resolution of the drive.
         Argument:
         value -- between [0 and 15] (standard is 3)
         """
-        respons = self._move_settings('MR', value)
-        if value is None:
-            respons = int(respons)
-        return respons
+        _ = self._move_settings('MR', value)
 
     @property
-    def conversion_factor(self):
-        """This yields the steps/rotation-angle ratio. The steps of the
+    def conversion_factor(self) -> float:
+        """This yields the steps/user-defined-unit ratio. The steps of the
         stepper motor depend on the microstep resolution setting.
-        The rotation angle is the one of the rotary feedthrough."""
-        wormwheel_ratio = 96/1
-        steps_per_motor_turn = STEPS_PER_TURN[self.microstep()]
-        conversion_factor = float(wormwheel_ratio) * float(steps_per_motor_turn) / 360.
-        return conversion_factor
+        """
+        steps_per_motor_turn = STEPS_PER_TURN[self.get_microstep()]
+        steps_per_unit = float(steps_per_motor_turn) / float(self._units_per_motor_turn)
+        return steps_per_unit
 
-    def step_to_angle(self, step: int) -> float:
-        """Convert stepper motor steps into a rotation angle
-        of the rotary feedthrough."""
+    def _step_to_unit(self, step: int) -> float:
+        """Convert stepper motor steps into user-defined units."""
         return float(step) / self.conversion_factor
 
-    def angle_to_step(self, angle: float) -> int:
-        """Convert an angle of the rotary feedthrough into
+    def _unit_to_step(self, value: float) -> int:
+        """Convert value in user-defined units into
         steps of the stepper motor.
         Argument:
-        angle -- in degree"""
-        return int(round(angle * self.conversion_factor))
+        value -- in user-defined units"""
+        return int(round(value * self.conversion_factor))
 
     def max_current(self, value: float=None):
         """Set or request the maximum idle and change current limit.
@@ -255,21 +265,21 @@ class STF03D:
         return self._move_settings('CC', value)
 
     def get_position(self) -> float:
-        """Returns the current angle of the rotary feedthrough in degrees."""
-        steps = int(self.query('SP')[3:])
+        """Returns the current position in user-defined units."""
+        steps = int(self._query('SP')[3:])
         print(f'Position in steps is: {steps}')
-        return self.step_to_angle(steps)
+        return self._step_to_unit(steps)
 
     def reset_position(self):
         """Set current motor position to the new zero position."""
-        _ = self.query('SP0')
+        _ = self._query('SP0')
 
     def get_immediate_position(self) -> int:
         """This returns the calculated trajectory position, which
         is not always equal to the actual position.
         Units are stepper motor steps.
         """
-        respons = self.query('IP')[3:]
+        respons = self._query('IP')[3:]
         print(respons)
         position = int(respons, 16)
         return position
@@ -298,13 +308,13 @@ class STF03D:
         """
         return self._move_settings('VE', value)
 
-    def move_relative(self, angle: float):
+    def move_relative(self, value: float):
         """Relative rotation of the feedthrough
         Argument:
-        angle -- in degrees
+        value -- in user-defined units
         """
-        _ = self._distance_or_position(angle)
-        _ = self.query('FL')
+        _ = self._distance_or_position(value)
+        _ = self._query('FL')
 
     def move_absolute(self, position: float):
         """Rotate the feedthrough to a given position
@@ -312,18 +322,14 @@ class STF03D:
         position -- in degrees
         """
         _ = self._distance_or_position(position)
-        _ = self.query('FP')
+        _ = self._query('FP')
 
 
 class STF03DDUMMY:
     """Class for testing. Does not actually connect to any device."""
-    def __init__(
-            self,
-            device_ip,
-            host_ip=HOST_IP,
-            host_port=HOST_PORT,
-            timeout=5
-    ):
+    def __init__(self, device_ip, host_ip=HOST_IP,
+        host_port=HOST_PORT, timeout=5):
+
         self.ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port
@@ -373,8 +379,8 @@ class STF03DDUMMY:
             self.velocity = value
             return ''
 
-    def move_relative(self, angle: float):
-        self.position += angle
+    def move_relative(self, value: float):
+        self.position += value
 
     def move_absolute(self, position: float):
         self.position = position
