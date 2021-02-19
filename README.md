@@ -1,3 +1,5 @@
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md)
+
 # labdevices
 
 The goal of this python package is to provide simple software drivers for the use of typical devices found in atomic physics research labs.
@@ -141,4 +143,3 @@ If an Ethernet device is not recognized, check its settings. Usually a fixed IP 
 
 - Repo owner:  Julian Krauth, j.krauth@vu.nl
 - Institution: Vrije Universiteit Amsterdam, Faculty of Sciences, The Netherlands
-- MIT License, see file `LICENSE.md`
