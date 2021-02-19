@@ -27,9 +27,6 @@ class Manta:
     """
     Driver class for the GigE Allied Vision Manta Cameras.
     """
-
-    camera = None
-
     def __init__(self, camera_id: str):
         """
         Arguments:
@@ -39,110 +36,113 @@ class Manta:
         self.vimba = pymba.Vimba()
         self.vimba.startup()
 
-        # Find cameras
+        # Find cameras and pick correct index.
         camera_ids = self.vimba.camera_ids()
         print ("Available cameras : %s" % (camera_ids))
         # Find correct camera index
-        self.camera_id = camera_id
+        self.device_id = camera_id
         for index, identity in enumerate(camera_ids):
-            if self.camera_id == identity:
-                self.camera_index = index
+            if self.device_id == identity:
+                self.device_index = index
                 break
+
+        # This will become the camera.
+        self._device = None
 
     def initialize(self):
         """Establish connection to camera"""
-        self.camera = self.vimba.camera(self.camera_index)
-        self.camera.open()
-        print(f"Connected to camera : {self.camera_id}")
+        self._device = self.vimba.camera(self.device_index)
+        self._device.open()
+        print(f"Connected to camera : {self.device_id}")
 
 
     def close(self):
         """Close connection to camera"""
-        if self.camera is not None:
-            self.camera.close()
+        if self._device is not None:
+            self._device.close()
             self.vimba.shutdown()
 
     @property
     def model_name(self) -> str:
-        name = self.camera.DeviceModelName
+        name = self._device.DeviceModelName
         return name
 
     @property
     def packet_size(self) -> int:
-        return self.camera.GVSPPacketSize
+        return self._device.GVSPPacketSize
 
     @packet_size.setter
     def packet_size(self, value:int):
-        self.camera.GVSPPacketSize=value
+        self._device.GVSPPacketSize=value
 
     @property
     def exposure(self) -> int:
         """Exposure in microseconds"""
-        expos = self.camera.ExposureTimeAbs
+        expos = self._device.ExposureTimeAbs
         return expos*1e-6
 
     @exposure.setter
     def exposure(self, expos: int):
-        self.camera.ExposureTimeAbs = expos*1e6
+        self._device.ExposureTimeAbs = expos*1e6
 
     @property
     def gain(self):
         # Best image quality is achieved with gain = 0
-        gain = self.camera.Gain
+        gain = self._device.Gain
         return gain
 
     @gain.setter
     def gain(self,gain):
-        self.camera.Gain = gain
+        self._device.Gain = gain
 
     @property
     def roi_x(self) -> int:
-        return self.camera.OffsetX
+        return self._device.OffsetX
 
     @roi_x.setter
     def roi_x(self, val: int):
-        self.camera.OffsetX = val
+        self._device.OffsetX = val
 
     @property
     def roi_y(self) -> int:
-        return self.camera.OffsetY
+        return self._device.OffsetY
 
     @roi_y.setter
     def roi_y(self, val: int):
-        self.camera.OffsetY = val
+        self._device.OffsetY = val
 
     @property
     def roi_dx(self) -> int:
-        return self.camera.Width
+        return self._device.Width
 
     @roi_dx.setter
     def roi_dx(self, val: int):
-        self.camera.Width = val
+        self._device.Width = val
 
     @property
     def roi_dy(self) -> int:
-        return self.camera.Height
+        return self._device.Height
 
     @roi_dy.setter
     def roi_dy(self, val: int):
-        self.camera.Height = val
+        self._device.Height = val
 
     @property
     def sensor_size(self):
         """Returns number of pixels in width and height of the sensor"""
-        width = self.camera.SensorWidth
-        height = self.camera.SensorHeight
+        width = self._device.SensorWidth
+        height = self._device.SensorHeight
         return width, height
 
     @property
     def acquisition_mode(self):
-        return self.camera.AcquisitionMode
+        return self._device.AcquisitionMode
 
     @acquisition_mode.setter
     def acquisition_mode(self, mode):
         options = {'SingleFrame', 'Continuous'}
         if mode in options:
-            self.camera.arm(mode)
+            self._device.arm(mode)
         else:
             raise Exception(f"Value '{mode}' for acquisition mode is not valied")
 
@@ -153,10 +153,10 @@ class Manta:
         The argument adapts the method for the pixel format set in
         the camera. See pixFormat method.
         """
-        self.camera.arm('SingleFrame')
-        frame = self.camera.acquire_frame()
+        self._device.arm('SingleFrame')
+        frame = self._device.acquire_frame()
         image = frame.buffer_data_numpy().copy()
-        self.camera.disarm()
+        self._device.disarm()
         return image
 
 
@@ -169,11 +169,11 @@ class Manta:
         """
         if mode is None:
             onoff = {'Off': 0, 'On': 1}
-            mode = self.camera.TriggerMode
+            mode = self._device.TriggerMode
             return onoff[mode]
         else:
             onoff = ['Off', 'On']
-            self.camera.TriggerMode = onoff[mode]
+            self._device.TriggerMode = onoff[mode]
 
     def trig_source(self, source=None):
         """Get/Select trigger source keyword arguments:
@@ -183,10 +183,10 @@ class Manta:
             str -- trigger source
         """
         if source is None:
-            source = self.camera.TriggerSource
+            source = self._device.TriggerSource
             return source
         else:
-            self.camera.TriggerSource = source
+            self._device.TriggerSource = source
 
 
     def pix_format(self, pix=None):
@@ -198,17 +198,17 @@ class Manta:
             str -- Pixelformat
         """
         if pix is None:
-            pix = self.camera.PixelFormat
+            pix = self._device.PixelFormat
             return pix
         else:
-            self.camera.PixelFormat = pix
+            self._device.PixelFormat = pix
 
 
 class MantaDummy:
     """Manta class for testing. It doesn't need any device connected."""
-    camera = None
 
     def __init__(self, camera_id=1):
+        self._device = None
         self.height = 1216
         self.width = 1936
         self.exposure = 20
@@ -221,11 +221,11 @@ class MantaDummy:
         self.format = 'Mono8'
 
     def initialize(self):
-        self.camera = 1
+        self._device = 1
         print('Connected to camera dummy!')
 
     def close(self):
-        if self.camera is not None:
+        if self._device is not None:
             pass
         else:
             print('Camera dummy closed!')

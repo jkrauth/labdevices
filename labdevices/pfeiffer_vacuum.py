@@ -57,16 +57,16 @@ class TPG362:
     It might also work for other/older dual gauge versions
     of pfeiffer.
     """
-    device = None
 
     def __init__(self, port='/dev/ttyUSB0'):
         self.addr = 'ASRL'+port+'::INSTR'
         #self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
+        self._device = None
 
     def initialize(self):
         """Connect to device."""
         rm = pyvisa.ResourceManager()
-        self.device = rm.open_resource(
+        self._device = rm.open_resource(
             self.addr,
             timeout=100,
             encoding='ascii',
@@ -81,18 +81,18 @@ class TPG362:
 
     def close(self):
         """Close connection to device."""
-        if self.device is not None:
-            self.device.close()
+        if self._device is not None:
+            self._device.close()
 
     def _send_command(self, cmd: str):
-        recv = self.device.query(cmd)
+        recv = self._device.query(cmd)
         if recv ==  CTRL_CHAR['NAK']:
             message = 'Serial communication returned negative acknowledge'
             raise IOError(message)
         elif recv != CTRL_CHAR['ACK']:
             message = f'Serial communication returned unknown response: {recv}'
     def _get_data(self):
-        data = self.device.query(CTRL_CHAR['ENQ'])
+        data = self._device.query(CTRL_CHAR['ENQ'])
         return data
 
     def _query(self, cmd: str):
@@ -104,7 +104,7 @@ class TPG362:
     def _clear_output_buffer(self):
         """Clear the output buffer"""
         time.sleep(0.1)
-        just_read = self.device.read()
+        just_read = self._device.read()
         return just_read
 
     def idn(self):

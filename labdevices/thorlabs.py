@@ -24,15 +24,15 @@ class TSP01:
         'encoding':         'ascii',
     }
 
-    device = None
 
     def __init__(self, visa_addr: str):
         self.addr = visa_addr # e.g.: 'USB0::4883::33016::M00416750::0::INSTR'
-        self.rm = pyvisa.ResourceManager()
+        self._device = None
 
     def initialize(self):
         """Connect to device."""
-        self.device = self.rm.open_resource(
+        rm = pyvisa.ResourceManager()
+        self._device = rm.open_resource(
             self.addr,
             encoding=self.DEFAULTS['encoding'],
             read_termination=self.DEFAULTS['read_termination']
@@ -44,28 +44,28 @@ class TSP01:
 
     def close(self):
         """Closes connection to device if open."""
-        if self.device is not None:
-            self.device.close()
+        if self._device is not None:
+            self._device.close()
 
     @property
     def idn(self) -> str:
-        return self.device.query('*IDN?')
+        return self._device.query('*IDN?')
 
     def temperature_usb(self) -> float:
         """Returns built-in temperature of the TSP01 logger"""
-        return self.device.query_ascii_values(':READ?')[0]
+        return self._device.query_ascii_values(':READ?')[0]
 
     def humidity_usb(self) -> float:
         """Returns built-in relative humidity"""
-        return self.device.query_ascii_values(':SENSe2:HUMidity:DATA?')[0]
+        return self._device.query_ascii_values(':SENSe2:HUMidity:DATA?')[0]
 
     def temperature_probe1(self) -> float:
         """Returns temperature of external probe 1"""
-        return self.device.query_ascii_values(':SENSe3:TEMPerature:DATA?')[0]
+        return self._device.query_ascii_values(':SENSe3:TEMPerature:DATA?')[0]
 
     def temperature_probe2(self) -> float:
         """Returns temperature of external probe 2"""
-        return self.device.query_ascii_values(':SENSe4:TEMPerature:DATA?')[0]
+        return self._device.query_ascii_values(':SENSe4:TEMPerature:DATA?')[0]
 
 
 class TSP01Dummy:

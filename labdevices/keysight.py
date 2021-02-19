@@ -12,8 +12,6 @@ import re
 import pyvisa as visa
 import numpy as np
 
-rm = visa.ResourceManager()
-# rm_list = rm.list_resources()
 
 
 class Oscilloscope:
@@ -26,7 +24,7 @@ class Oscilloscope:
         Arguments:
         address -- str, VISA address for USB connection or IP for Ethernet.
         """
-        self.device = None
+        self._device = None
         # Check if address has IP pattern:
         if bool(re.match(r'^\d+\.\d+\.\d+\.\d+$', address)):
             self.device_address = (f'TCPIP::{address}::INSTR')
@@ -36,23 +34,24 @@ class Oscilloscope:
         else:
             raise ValueError("Address needs to be an IP or a valid VISA address.")
 
+
     def initialize(self):
         """Establish connection to device."""
-        self.device = rm.open_resource(self.device_address)
+        self._device = visa.ResourceManager().open_resource(self.device_address)
 
         print(f"Connected to:\n{self.idn}")
 
     def query(self, cmd):
-        response = self.device.query(cmd)
+        response = self._device.query(cmd)
         return response
 
     def write(self, cmd):
-        self.device.write(cmd)
+        self._device.write(cmd)
 
     def ieee_query(self, cmd):
-        self.device.timeout = 20000
+        self._device.timeout = 20000
         self.write(cmd)
-        response = self.device.query_binary_values(f'{cmd}', datatype='s')
+        response = self._device.query_binary_values(f'{cmd}', datatype='s')
         return response[0]
 
 
@@ -90,13 +89,13 @@ class Oscilloscope:
         return image_bytes
 
     def close(self):
-        if self.device is not None:
-            self.device.before_close()
-            self.device.close()
+        if self._device is not None:
+            self._device.before_close()
+            self._device.close()
 
     def get_trace(self, channel):
 
-        self.device.timeout = 10000
+        self._device.timeout = 10000
         self.write(':ACQuire:TYPE NORMal')
         self.write(f':WAVeform:SOURce {channel}')
         self.write(':WAVeform:POINts:MODE NORMal')

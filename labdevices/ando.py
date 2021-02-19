@@ -24,7 +24,6 @@ except ImportError as err:
 class SpectrumAnalyzer:
     """Driver for the Ando Spectrum Analyzer. The connection is done via
     a prologix gpib-to-ethernet adapter."""
-    ando = None
 
     def __init__(
             self,
@@ -37,12 +36,14 @@ class SpectrumAnalyzer:
         """
         self.ip = ip
         self.gpib = gpib
+        self._device = None
+
 
     def initialize(self):
         """Open connection to device."""
-        self.ando = PrologixGPIBEthernet(self.ip)
-        self.ando.connect()
-        self.ando.select(self.gpib)
+        self._device = PrologixGPIBEthernet(self.ip)
+        self._device.connect()
+        self._device.select(self.gpib)
 
         idn = self.send_query('*IDN?')
         idn_respons = [
@@ -57,17 +58,17 @@ class SpectrumAnalyzer:
             i+=1
 
     def send_cmd(self, cmd:str):
-        self.ando.write(cmd)
+        self._device.write(cmd)
 
     def send_query(self, query:str):
-        query = self.ando.query(query)
+        query = self._device.query(query)
         query = query.rstrip('\r\n')
         query = query.split(',')
         return query
 
     def finish(self):
         """waits till a certain task is finished"""
-        while int(self.ando.query('SWEEP?')[0])!=0:
+        while int(self._device.query('SWEEP?')[0])!=0:
             sleep(.5)
 
     def sampling(self, smpl:int=None):
@@ -82,8 +83,8 @@ class SpectrumAnalyzer:
 
     def close(self):
         """Close connection to device."""
-        if self.ando is not None:
-            self.ando.close()
+        if self._device is not None:
+            self._device.close()
         else:
             print('Ando is already closed!')
 
@@ -191,13 +192,13 @@ class SpectrumAnalyzer:
 
 class SpectrumAnalyzerDummy:
     """Class for testing purpose only."""
-    ando = None
 
     def __init__(
         self,
         ip='10.0.0.40',
         gpib=1):
 
+        self._device = None
         self.ip = ip
         self.gpib = gpib
         self.wavelength = 390
@@ -205,11 +206,11 @@ class SpectrumAnalyzerDummy:
         self.cw = 0
 
     def initialize(self):
-        self.ando = 1
+        self._device = 1
         print('Connected to Ando Dummy')
 
     def close(self):
-        if self.ando is not None:
+        if self._device is not None:
             pass
         else:
             print('Ando dummy is already closed!')

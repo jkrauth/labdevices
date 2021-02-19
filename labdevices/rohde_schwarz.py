@@ -24,13 +24,13 @@ class FPC1000:
         ip -- IP address of the device, e.g. '10.0.0.90'
         """
         self.addr = 'TCPIP::'+ip
-        self.device = None
+        self._device = None
         #self.timeout = 10000 # in ms, default is 2000
-        self.rm = pyvisa.ResourceManager()
 
     def initialize(self):
         """Connect to the device"""
-        self.device = self.rm.open_resource(self.addr)
+        rm = pyvisa.ResourceManager()
+        self._device = rm.open_resource(self.addr)
         print(f'Connected to {self.idn}')
 
     @property
@@ -40,15 +40,15 @@ class FPC1000:
 
     def close(self):
         """Close connection to the device"""
-        if self.device is not None:
-            self.device.close()
+        if self._device is not None:
+            self._device.close()
             print('Connection to FPC1000 closed!')
         else:
             print('FPC1000 is already closed.')
 
     def query(self, cmd: str) -> str:
         """Send a command and receive the answer"""
-        respons = self.device.query(cmd).rstrip()
+        respons = self._device.query(cmd).rstrip()
         return respons
 
     def get_trace(self):
@@ -68,23 +68,21 @@ class FPC1000:
 
     def get_system_alarm(self) -> str:
         """Return system alarms and clear alarm buffer."""
-        respons = self.device.query('SYST:ERR:ALL?')
+        respons = self._device.query('SYST:ERR:ALL?')
         return respons
 
-RM = pyvisa.ResourceManager()
 
 class Oscilloscope:
     """
     Is tested with the following Rohde & Schwarz oscilloscope
     models:
-
     """
     def __init__(self, address: str):
         """
         Arguments:
         address -- str, VISA address for USB connection or IP for Ethernet.
         """
-        self.device = None
+        self._device = None
         # Check if address has IP pattern:
         if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
             self.device_address = (f'TCPIP::{address}::INSTR')
@@ -97,22 +95,22 @@ class Oscilloscope:
     def initialize(self):
         """Connect to device."""
         #rm_list = rm.list_resources()
-
-        self.device = RM.open_resource(self.device_address)
+        rm = pyvisa.ResourceManager()
+        self._device = rm.open_resource(self.device_address)
         print(f"Connected to:\n{self.idn}")
 
 
     def query(self, cmd: str):
-        response = self.device.query(cmd)
+        response = self._device.query(cmd)
         return response
 
     def write(self, cmd: str):
-        self.device.write(cmd)
+        self._device.write(cmd)
 
     def ieee_query(self, cmd: str):
-        self.device.timeout = 20000
+        self._device.timeout = 20000
         self.write(cmd)
-        response = self.device.query_binary_values(f'{cmd}', datatype='s')
+        response = self._device.query_binary_values(f'{cmd}', datatype='s')
 
         return response
 
@@ -128,7 +126,6 @@ class Oscilloscope:
 
 
     def get_volt_max(self,channel: int):
-
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN UPEakvalue")
         result = self.query("MEASurement:RESult?")
         return float(result)
@@ -166,6 +163,6 @@ class Oscilloscope:
         self.write(cmd = f":TIMebase:SCALe {time}")
 
     def close(self):
-        if self.device is not None:
-            self.device.before_close()
-            self.device.close()
+        if self._device is not None:
+            self._device.before_close()
+            self._device.close()
