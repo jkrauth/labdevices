@@ -29,8 +29,7 @@ class FPC1000:
 
     def initialize(self):
         """Connect to the device"""
-        rm = pyvisa.ResourceManager()
-        self._device = rm.open_resource(self.addr)
+        self._device = pyvisa.ResourceManager().open_resource(self.addr)
         print(f'Connected to {self.idn}')
 
     @property
@@ -59,12 +58,12 @@ class FPC1000:
         Return x and y as lists of floats.
         """
         raw_y = self.query('TRAC:DATA? TRACE1')
-        y = [float(i) for i in raw_y.split(',')]
+        y_data = [float(i) for i in raw_y.split(',')]
         sleep(0.1)
         x_start = float(self.query('FREQ:STAR?'))
         x_stop = float(self.query('FREQ:STOP?'))
-        x = list(np.linspace(x_start, x_stop, len(y)))
-        return x, y
+        x_data = list(np.linspace(x_start, x_stop, len(y_data)))
+        return x_data, y_data
 
     def get_system_alarm(self) -> str:
         """Return system alarms and clear alarm buffer."""
@@ -94,9 +93,7 @@ class Oscilloscope:
 
     def initialize(self):
         """Connect to device."""
-        #rm_list = rm.list_resources()
-        rm = pyvisa.ResourceManager()
-        self._device = rm.open_resource(self.device_address)
+        self._device = pyvisa.ResourceManager().open_resource(self.device_address)
         print(f"Connected to:\n{self.idn}")
 
 

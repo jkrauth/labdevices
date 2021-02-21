@@ -80,9 +80,8 @@ class SMC100:
     def initialize(self) -> None:
         """Connect to device."""
         port = 'ASRL'+self.port+'::INSTR'
-        rm = visa.ResourceManager('@py')
         #rm_list = rm.list_resources()
-        self._device = rm.open_resource(
+        self._device = visa.ResourceManager('@py').open_resource(
             port,
             timeout=self.defaults['timeout'],
             encoding=self.defaults['encoding'],
@@ -114,8 +113,8 @@ class SMC100:
         respons = self._device.query(cmd_complete)
         # respons is build the following way:
         # dev_number+cmd_return+answer | cmd_return never contains the question mark
-        dev_number = int(respons[0])
-        cmd_return = respons[1:3]
+        #dev_number = int(respons[0])
+        #cmd_return = respons[1:3]
         answer = respons[3:]
 
         return answer
@@ -217,9 +216,11 @@ class SMC100DUMMY:
     device = None
 
     def __init__(self, port, dev_number):
+        self.port = port
         self.dev_number = dev_number
         self.idn = '123456'
         self.pos = 0
+        self._device = None
 
     def initialize(self):
         self._device = 1

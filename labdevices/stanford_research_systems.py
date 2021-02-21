@@ -48,11 +48,12 @@ class DG645:
         self.tcp = tcp
         self.port = port
         self._device = None
+        self.timeout = timeout
 
     def initialize(self):
         """Connect to the device."""
         self._device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._device.settimeout(timeout)
+        self._device.settimeout(self.timeout)
         self._device.connect((self.tcp, self.port))
         time.sleep(0.2)
         print('bla')
@@ -116,7 +117,7 @@ class DG645:
             channel = self.DEFAULTS['channel'][channel]
         cmd = f'DLAY? {channel}'
         respons = self.query(cmd)
-        reference = respons[0]
+        #reference = respons[0]
         delay = float(respons[2:])
         return delay
 
@@ -137,6 +138,7 @@ class DG645:
 class DG645DUMMY(DG645):
     """For testing purpose only. No device needed."""
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
+        super().__init__(tcp, port)
         self.idn = 'Dummy DG645'
 
     def initialize(self):

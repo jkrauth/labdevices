@@ -107,7 +107,7 @@ class STF03D:
         host_port   -- Port used by host
         timeout     -- in seconds
         """
-        self.ip = device_ip
+        self.device_ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port
         self.timeout = timeout
@@ -119,7 +119,7 @@ class STF03D:
     def _write(self, cmd: str):
         """Send a message with the correct header and end characters"""
         to_send = self._header + cmd.encode() + self._tail
-        self._device.sendto(to_send, (self.ip, UDP_PORT))
+        self._device.sendto(to_send, (self.device_ip, UDP_PORT))
 
     def _read(self) -> str:
         """Read UDP message, decode, strip off header and end characters
@@ -162,7 +162,7 @@ class STF03D:
         self._device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._device.bind((self.host_ip, self.host_port))
         self._device.settimeout(self.timeout)
-        print(f'Connected to rotary feedthrough with IP={self.ip}.')
+        print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
 
     def close(self):
         """Close connection to device."""
@@ -170,7 +170,7 @@ class STF03D:
             print('Device is already closed.')
             return
         self._device.close()
-        print(f'Closed rotary feedthrough with IP={self.ip}.')
+        print(f'Closed rotary feedthrough with IP={self.device_ip}.')
 
 
     def get_alarm(self) -> list:
@@ -330,7 +330,7 @@ class STF03DDUMMY:
     def __init__(self, device_ip, host_ip=HOST_IP,
         host_port=HOST_PORT, timeout=5):
 
-        self.ip = device_ip
+        self.device_ip = device_ip
         self.host_ip = host_ip
         self.host_port = host_port
         self.timeout = timeout
@@ -361,23 +361,20 @@ class STF03DDUMMY:
     def acceleration(self, value: float=None):
         if value is None:
             return self.accel
-        else:
-            self.accel = value
-            return ''
+        self.accel = value
+        return ''
 
     def deceleration(self, value: float=None):
         if value is None:
             return self.decel
-        else:
-            self.decel = value
-            return ''
+        self.decel = value
+        return ''
 
     def speed(self, value: float=None):
         if value is None:
             return self.velocity
-        else:
-            self.velocity = value
-            return ''
+        self.velocity = value
+        return ''
 
     def move_relative(self, value: float):
         self.position += value

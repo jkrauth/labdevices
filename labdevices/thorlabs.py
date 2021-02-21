@@ -31,8 +31,7 @@ class TSP01:
 
     def initialize(self):
         """Connect to device."""
-        rm = pyvisa.ResourceManager()
-        self._device = rm.open_resource(
+        self._device = pyvisa.ResourceManager().open_resource(
             self.addr,
             encoding=self.DEFAULTS['encoding'],
             read_termination=self.DEFAULTS['read_termination']

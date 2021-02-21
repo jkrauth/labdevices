@@ -11,6 +11,8 @@ from setuptools import setup, find_packages
 setup(
     name='labdevices',
     version='0.7',
+    author='Julian Krauth',
+    license="MIT",
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=[
@@ -27,6 +29,7 @@ setup(
     # '/tarball/master#egg=<PACKAGE_NAME>-<VERSION>',
     # where <VERSION> is the git tag to use.
     #dependency_links=[
-    #    'git+https://github.com/nelsond/prologix-gpib-ethernet/tarball/master#egg=prologix-gpib-ethernet-0.1.2'
+    #    'git+https://github.com/nelsond/prologix-gpib-ethernet/'\
+    #    'tarball/master#egg=prologix-gpib-ethernet-0.1.2'
     #]
 )

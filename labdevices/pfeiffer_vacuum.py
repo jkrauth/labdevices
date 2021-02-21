@@ -65,8 +65,7 @@ class TPG362:
 
     def initialize(self):
         """Connect to device."""
-        rm = pyvisa.ResourceManager()
-        self._device = rm.open_resource(
+        self._device = pyvisa.ResourceManager().open_resource(
             self.addr,
             timeout=100,
             encoding='ascii',
@@ -89,7 +88,7 @@ class TPG362:
         if recv ==  CTRL_CHAR['NAK']:
             message = 'Serial communication returned negative acknowledge'
             raise IOError(message)
-        elif recv != CTRL_CHAR['ACK']:
+        if recv != CTRL_CHAR['ACK']:
             message = f'Serial communication returned unknown response: {recv}'
     def _get_data(self):
         data = self._device.query(CTRL_CHAR['ENQ'])

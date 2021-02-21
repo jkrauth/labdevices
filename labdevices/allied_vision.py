@@ -159,55 +159,64 @@ class Manta:
         self._device.disarm()
         return image
 
-
-    def trig_mode(self, mode=None):
+    @property
+    def trig_mode(self) -> int:
         """Toggle Trigger Mode set by 1/0, respectively.
-        Keyword Arguments:
-            mode {int} -- possible values: 0, 1
         Returns:
             int -- 0 or 1, depending on trigger mode off or on
         """
-        if mode is None:
-            onoff = {'Off': 0, 'On': 1}
-            mode = self._device.TriggerMode
-            return onoff[mode]
-        else:
-            onoff = ['Off', 'On']
-            self._device.TriggerMode = onoff[mode]
+        onoff = {'Off': 0, 'On': 1}
+        mode = self._device.TriggerMode
+        return onoff[mode]
 
-    def trig_source(self, source=None):
+    @trig_mode.setter
+    def trig_mode(self, mode: int):
+        """Toggle Trigger Mode set by 1/0, respectively.
+        Keyword Arguments:
+            mode -- possible values: 0, 1
+        """
+        onoff = ['Off', 'On']
+        self._device.TriggerMode = onoff[mode]
+
+    @property
+    def trig_source(self) -> str:
         """Get/Select trigger source keyword arguments:
-            source {str} -- Source can be one of the following strings:
-                            'Freerun', 'Line1', 'Line2', 'FixedRate', 'Software'
         Returns:
             str -- trigger source
         """
-        if source is None:
-            source = self._device.TriggerSource
-            return source
-        else:
-            self._device.TriggerSource = source
+        return self._device.TriggerSource
 
+    @trig_source.setter
+    def trig_source(self, source: str):
+        """Get/Select trigger source keyword arguments:
+            source {str} -- Source can be one of the following strings:
+                            'Freerun', 'Line1', 'Line2', 'FixedRate', 'Software'
+        """
+        self._device.TriggerSource = source
 
-    def pix_format(self, pix=None):
+    @property
+    def pix_format(self) -> str:
+        """Get/Select pixel format
+        Returns:
+            str -- Pixelformat
+        """
+        return self._device.PixelFormat
+
+    @pix_format.setter
+    def pix_format(self, pix: str):
         """Get/Select pixel format
         Keyword Arguments:
             pix {str} -- possible values: 'Mono8','Mono12','Mono12Packed'
                          (default: {None})
-        Returns:
-            str -- Pixelformat
         """
-        if pix is None:
-            pix = self._device.PixelFormat
-            return pix
-        else:
-            self._device.PixelFormat = pix
+        self._device.PixelFormat = pix
 
 
 class MantaDummy:
     """Manta class for testing. It doesn't need any device connected."""
 
     def __init__(self, camera_id=1):
+        self.camera_id = camera_id
         self._device = None
         self.height = 1216
         self.width = 1936
@@ -217,8 +226,8 @@ class MantaDummy:
         self.roi_y = 0
         self.roi_dx = 100
         self.roi_dy = 100
-        self.source = 'External'
-        self.format = 'Mono8'
+        self.trig_source = 'External'
+        self.pix_format = 'Mono8'
 
     def initialize(self):
         self._device = 1
@@ -229,18 +238,6 @@ class MantaDummy:
             pass
         else:
             print('Camera dummy closed!')
-
-    def trig_source(self, val=None):
-        if val is None:
-            return self.source
-        else:
-            self.source = val
-
-    def pix_format(self, val=None):
-        if val is None:
-            return self.format
-        else:
-            self.format = val
 
     def take_single_img(self):
         return 255*np.random.rand(self.height, self.width)
