@@ -12,7 +12,7 @@ setup(
     name='labdevices',
     version='0.7',
     author='Julian Krauth',
-    license="MIT",
+    license="MIT License",
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=[
