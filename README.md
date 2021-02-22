@@ -71,10 +71,10 @@ from labdevices.thorlabs import TSP01
 For each device there should be a dummy device available in order to test software, when there is actually no device connected. For the switching to a dummy device simply import
 
 ```python
-from labdevices.thorlabs import TSP01DUMMY
+from labdevices.thorlabs import TSP01Dummy
 ```
 
-with DUMMY added to the device's class name.
+with *Dummy* added to the device's class name.
 
 ## Contributing
 

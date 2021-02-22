@@ -210,10 +210,8 @@ class SMC100:
     def acceleration(self, value: float):
         self.write(f'AC{value}')
 
-class SMC100DUMMY:
+class SMC100Dummy:
     """For testing purpose only"""
-
-    device = None
 
     def __init__(self, port, dev_number):
         self.port = port

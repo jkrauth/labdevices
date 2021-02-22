@@ -135,7 +135,7 @@ class DG645:
         return respons
 
 
-class DG645DUMMY(DG645):
+class DG645Dummy(DG645):
     """For testing purpose only. No device needed."""
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
         super().__init__(tcp, port)

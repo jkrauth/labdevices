@@ -325,7 +325,7 @@ class STF03D:
         _ = self._query('FP')
 
 
-class STF03DDUMMY:
+class STF03DDummy:
     """Class for testing. Does not actually connect to any device."""
     def __init__(self, device_ip, host_ip=HOST_IP,
         host_port=HOST_PORT, timeout=5):

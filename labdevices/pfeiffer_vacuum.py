@@ -177,7 +177,7 @@ class TPG362:
         response = self._query(cmd)
         return int(response)
 
-class TPG362DUMMY:
+class TPG362Dummy:
     """For testing purpose. No devices needed."""
     def __init__(self, port=None):
         pass
