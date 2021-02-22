@@ -1,4 +1,4 @@
-[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md)
+[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md)
 
 # labdevices
 
@@ -98,8 +98,7 @@ New drivers should be tested before the changes are merged into the master branc
 
 Please keep in mind to:
 
-- stick to the [naming convention](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html).
-- use docstrings whenever useful, according to [PEP257](https://www.python.org/dev/peps/pep-0257/).
+- check your code with pylint
 - for new modules always add a module header with name, author, date.
 - not include paths for saving files, VISA addresses of specific devices, etc., that should be part of your local application.
 
