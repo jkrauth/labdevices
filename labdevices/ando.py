@@ -71,15 +71,20 @@ class SpectrumAnalyzer:
         while int(self._device.query('SWEEP?')[0])!=0:
             sleep(.5)
 
-    def sampling(self, smpl:int=None):
-        """ Get/Set sampling rate"""
-        if smpl is None:
-            smpl = self.send_query('SMPL?')
-            return int(smpl[0])
+    @property
+    def sampling(self) -> int:
+        """ Get sampling rate"""
+        smpl = self.send_query('SMPL?')
+        return int(smpl[0])
+
+    @sampling.setter
+    def sampling(self, smpl: int):
+        """ Set sampling rate"""
         if smpl<11 or smpl>1001:
             print("Use a sampling number from 11 to 1001!")
         else:
             self.send_cmd(f'SMPL{smpl}')
+
 
     def close(self):
         """Close connection to device."""
@@ -88,7 +93,7 @@ class SpectrumAnalyzer:
         else:
             print('Ando is already closed!')
 
-    def sweep(self):
+    def do_sweep(self):
         """
         Does a sweep with the current settings and saves the data in a buffer.
         Read out the buffer using self.getData()
@@ -180,8 +185,8 @@ class SpectrumAnalyzer:
         0 pulsed mode
         1 cw mode
         """
-        cw = self.send_query('CWPLS?')
-        return int(cw[0])
+        continuous_wave = self.send_query('CWPLS?')
+        return int(continuous_wave[0])
 
     @cw_mode.setter
     def cw_mode(self, cw: int):

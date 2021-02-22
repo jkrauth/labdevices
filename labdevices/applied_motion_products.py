@@ -91,10 +91,8 @@ class STF03D:
     _header = bytes([0x00, 0x007])
     _tail = bytes([0xD])
 
-    def __init__(self, device_ip: str, calibration: float,
-        host_ip: str=HOST_IP,
-        host_port: int=HOST_PORT,
-        timeout: float=5):
+    def __init__(self, device_ip: str, host_ip: str=HOST_IP,
+        host_port: int=HOST_PORT, timeout: float=5):
         """
         Arguments:
         device_ip   -- IP address of device
@@ -113,8 +111,8 @@ class STF03D:
         self.timeout = timeout
         self._device = None
 
-        # This is the calibration and it has to be set self.set_calibration()
-        self._units_per_motor_turn = calibration
+        # This is the calibration and it has to be set by self.set_calibration()
+        self._units_per_motor_turn = None
 
     def _write(self, cmd: str):
         """Send a message with the correct header and end characters"""
@@ -138,9 +136,8 @@ class STF03D:
         if value is None:
             respons = self._query(cmd)[3:]
             return respons
-        else:
-            cmd = cmd + str(value)
-            return self._query(cmd)
+        cmd = cmd + str(value)
+        return self._query(cmd)
 
     def _distance_or_position(self, value: float=None):
         """Set or request the distance by which the motor moves after sending
@@ -152,10 +149,9 @@ class STF03D:
             steps = int(self._move_settings('DI', None))
             value = self._step_to_unit(steps)
             return value
-        else:
-            steps = self._unit_to_step(value)
-            print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
-            return self._move_settings('DI', steps)
+        steps = self._unit_to_step(value)
+        print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
+        return self._move_settings('DI', steps)
 
     def initialize(self):
         """Establish connection to device."""
@@ -163,6 +159,9 @@ class STF03D:
         self._device.bind((self.host_ip, self.host_port))
         self._device.settimeout(self.timeout)
         print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
+
+    def set_calibration(self, units_per_motor_turn: float):
+        self._units_per_motor_turn = units_per_motor_turn
 
     def close(self):
         """Close connection to device."""
@@ -231,6 +230,8 @@ class STF03D:
         """This yields the steps/user-defined-unit ratio. The steps of the
         stepper motor depend on the microstep resolution setting.
         """
+        if self._units_per_motor_turn is None:
+            raise Exception('Set calibration first')
         steps_per_motor_turn = STEPS_PER_TURN[self.get_microstep()]
         steps_per_unit = float(steps_per_motor_turn) / float(self._units_per_motor_turn)
         return steps_per_unit
