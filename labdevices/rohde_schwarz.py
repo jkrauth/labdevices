@@ -7,7 +7,6 @@ Date created: 2020/11/11
 Python Version: 3.7
 
 """
-from time import sleep
 import re
 from typing import NamedTuple
 import numpy as np
@@ -25,21 +24,27 @@ class Preamble(NamedTuple):
 
 class FPC1000:
     """Simple spectrum analyzer.
-    Works for now with an Ethernet connection.
-    USB is not implemented.
+    Works for with an Ethernet connection.
+    It can be connected via USB, but is not a normal USB device.
+    When connected via USB use address = '172.16.10.10'
+    This is currently not supported Linux it seems.
     """
 
-    def __init__(self, ip: str):
-        """Arguments:
-        ip -- IP address of the device, e.g. '10.0.0.90'
+    def __init__(self, address: str):
         """
-        self.addr = 'TCPIP::'+ip
+        Arguments:
+        address -- str, IP address.
+        """
         self._device = None
-        #self.timeout = 10000 # in ms, default is 2000
+        # Check if address has IP pattern:
+        if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
+            self.device_address = (f'TCPIP::{address}')
+        else:
+            raise ValueError("Address needs to be an IP address.")
 
     def initialize(self):
         """Connect to the device"""
-        self._device = pyvisa.ResourceManager().open_resource(self.addr)
+        self._device = pyvisa.ResourceManager().open_resource(self.device_address)
         print(f'Connected to {self.idn}')
 
     @property
@@ -49,11 +54,11 @@ class FPC1000:
 
     def close(self):
         """Close connection to the device"""
-        if self._device is not None:
-            self._device.close()
-            print('Connection to FPC1000 closed!')
-        else:
+        if self._device is None:
             print('FPC1000 is already closed.')
+        self._device.before_close()
+        self._device.close()
+        self._device = None
 
     def query(self, cmd: str) -> str:
         """Send a command and receive the answer"""
@@ -64,15 +69,17 @@ class FPC1000:
         """Get the trace which is currently shown on the display.
         For some reason this function sometimes times out.
         Increasing the timeout time couldn't solve the issue.
-
-        Return x and y as lists of floats.
+        Returns:
+        x, y -- as numpy arrays.
         """
-        raw_y = self.query('TRAC:DATA? TRACE1')
-        y_data = [float(i) for i in raw_y.split(',')]
-        sleep(0.1)
+        # Get y data
+        raw_y = self.query('TRAC:DATA? TRACE1').split(',')
+        y_data = np.asarray(raw_y).astype(np.float)
+        points = len(y_data)
+        # Get x data
         x_start = float(self.query('FREQ:STAR?'))
         x_stop = float(self.query('FREQ:STOP?'))
-        x_data = list(np.linspace(x_start, x_stop, len(y_data)))
+        x_data = np.linspace(x_start, x_stop, points)
         return x_data, y_data
 
     def get_system_alarm(self) -> str:
