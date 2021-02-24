@@ -9,14 +9,24 @@ Python Version: 3.7
 """
 from time import sleep
 import re
+from typing import NamedTuple
 import numpy as np
 import pyvisa
+
+PREAMBLE_TYPES = (float, float, int, int)
+
+class Preamble(NamedTuple):
+    """ The data structure containing the axis information of the waveform """
+    x_start: PREAMBLE_TYPES[0]              # in sec
+    x_stop: PREAMBLE_TYPES[1]               # in sec
+    points: PREAMBLE_TYPES[2]               # waveform length in samples
+    values_per_sample: PREAMBLE_TYPES[3]    # usually 1
 
 
 class FPC1000:
     """Simple spectrum analyzer.
     Works for now with an Ethernet connection.
-    Bluetooth is not implemented.
+    USB is not implemented.
     """
 
     def __init__(self, ip: str):
@@ -74,7 +84,7 @@ class FPC1000:
 class Oscilloscope:
     """
     Is tested with the following Rohde & Schwarz oscilloscope
-    models:
+    Tested with models: RTB2000
     """
     def __init__(self, address: str):
         """
@@ -93,66 +103,95 @@ class Oscilloscope:
 
     def initialize(self):
         """Connect to device."""
-        self._device = pyvisa.ResourceManager().open_resource(self.device_address)
+        self._device = pyvisa.ResourceManager().open_resource(
+            self.device_address
+            )
         print(f"Connected to:\n{self.idn}")
 
 
-    def query(self, cmd: str):
-        response = self._device.query(cmd)
+    def query(self, cmd: str) -> str:
+        response = self._device.query(cmd).strip('\n\x00\x00\x00')
         return response
 
     def write(self, cmd: str):
         self._device.write(cmd)
 
-    def ieee_query(self, cmd: str):
+    def ieee_query(self, cmd: str) -> bytes:
         self._device.timeout = 20000
-        self.write(cmd)
-        response = self._device.query_binary_values(f'{cmd}', datatype='s')
-
-        return response
+        response = self._device.query_binary_values(cmd, datatype='s')
+        return response[0]
 
     @property
     def idn(self):
+        """ Get device identity """
         idn = self.query("*IDN?")
         return idn
 
-    def get_volt_avg(self,channel: int):
+    def get_volt_avg(self,channel: int) -> float:
+        """ Installs a screen measurement and starts an
+        average value measurement.
+        Returns:
+        average value -- float
+        """
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN MEAN")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-
-    def get_volt_max(self,channel: int):
+    def get_volt_max(self,channel: int) -> float:
+        """ Installs a screen measurement and starts a
+        maximum value measurement.
+        Returns:
+        maximum value -- float
+        """
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN UPEakvalue")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-    def get_volt_peakpeak(self, channel: int):
+    def get_volt_peakpeak(self, channel: int) -> float:
+        """ Installs a screen measurement and starts a vertical
+        peak-to-peak measurement.
+        Returns:
+        peak-to-peak value -- float
+        """
         self.write(f"MEASurement:SOURce CH{channel}; MEASurement:MAIN PEAK")
         result = self.query("MEASurement:RESult?")
         return float(result)
 
     def get_trace(self, channel: int):
-        print(f'acquiring trace for channel {channel+1}')
+        """ Get the trace of a given channel from the oscilloscope.
+        Returns:
+        time, voltage -- as numpy arrays
+        """
+        # Set channel for single trigger
         self.write(f'CHANnel{channel}:SINGle')
-        voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?')
-        voltage = [float(i) for i in voltage.split(',')]
-
+        # Get trace data
+        voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?').split(',')
+        voltage = np.asarray(voltage).astype(np.float)
+        # Get time data
         # this query returns (xstart, xstop, length,Number of values per sample interval) as string
-        x_header = self.query(f'CHANnel{channel}:DATA:HEADer?')
-        x_header = x_header.split(',')
-        trace = np.linspace(float(x_header[0]), float(x_header[1]), int(x_header[2]))
+        preamble = self.get_preamble(channel)
+        time = np.linspace(preamble.x_start, preamble.x_stop, preamble.points)
+        return time, voltage
 
-        return trace, voltage
+    def get_preamble(self, channel: int) -> Preamble:
+        """Requests information about he selected waveform source.
+        Returns:
+        preamble -- Preamble"""
+        respons = self.query(f'CHANnel{channel}:DATA:HEADer?').split(',')
+        parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
+        return Preamble(*parameters)
 
-    def screen_shot(self):
-        """Takes a screenshot of the scope display."""
+    def get_screen_shot(self) -> bytes:
+        """Get an image of the oscilloscope display. The return can be
+        simply written to a file. Don't forget the binary mode then.
+        Returns:
+        png image -- bytes
+        """
         # self.write('HCOPy:CWINdow ON') this closes all windows
         # when taking screen shot so signal can be seen.
         # set format
         self.write('HCOPy:LANG PNG')
         image_bytes = self.ieee_query('HCOPy:DATA?')
-
         return image_bytes
 
     def set_t_scale(self, time: str):
@@ -160,6 +199,9 @@ class Oscilloscope:
         self.write(cmd = f":TIMebase:SCALe {time}")
 
     def close(self):
-        if self._device is not None:
-            self._device.before_close()
-            self._device.close()
+        """ Close the device. """
+        if self._device is None:
+            print('Device already closed.')
+        self._device.before_close()
+        self._device.close()
+        self._device = None
