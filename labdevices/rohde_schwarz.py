@@ -29,7 +29,6 @@ class FPC1000:
     When connected via USB use address = '172.16.10.10'
     This is currently not supported Linux it seems.
     """
-
     def __init__(self, address: str):
         """
         Arguments:
@@ -88,6 +87,24 @@ class FPC1000:
         return respons
 
 
+class FPC1000Dummy:
+    """ For testing only """
+    def __init__(self, address: str):
+        self.address = address
+        self.idn = 'dummy'
+
+    def initialize(self):
+        pass
+
+    def close(self):
+        pass
+
+    def get_trace(self):
+        x_data = np.arange(10)
+        y_data = np.arange(10)
+        return x_data, y_data
+
+
 class Oscilloscope:
     """
     Is tested with the following Rohde & Schwarz oscilloscope
@@ -134,7 +151,7 @@ class Oscilloscope:
         idn = self.query("*IDN?")
         return idn
 
-    def get_volt_avg(self,channel: int) -> float:
+    def get_volt_avg(self, channel: int) -> float:
         """ Installs a screen measurement and starts an
         average value measurement.
         Returns:
@@ -144,7 +161,7 @@ class Oscilloscope:
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-    def get_volt_max(self,channel: int) -> float:
+    def get_volt_max(self, channel: int) -> float:
         """ Installs a screen measurement and starts a
         maximum value measurement.
         Returns:
@@ -212,3 +229,30 @@ class Oscilloscope:
         self._device.before_close()
         self._device.close()
         self._device = None
+
+
+class OscilloscopeDummy:
+    """ Dummy class for R&S Oscilloscope """
+    def __init__(self, address: str):
+        self.address = address
+        self.value = 10.
+        self.idn = 'DummyScope'
+
+    def initialize(self):
+        pass
+
+    def close(self):
+        pass
+
+    def get_volt_avg(self, channel: int):
+        return self.value
+
+    def get_volt_max(self, channel: int):
+        return self.get_volt_avg(channel)
+
+    def get_volt_peakpeak(self, channel: int):
+        return self.get_volt_avg(channel)
+
+    def get_trace(self, channel: int):
+        x_data = np.arange(int(self.value))
+        return x_data, x_data
