@@ -96,11 +96,6 @@ class STF03D:
         """
         Arguments:
         device_ip   -- IP address of device
-        calibration -- units per full turn of the stepper motor (gear ratio).
-                       Example:
-                       For a rotation stage with gear ratio 1/96 the
-                       conversion factor into degrees would be 360/96,
-                       For a linear stage it would be the lead value of the screw.
         host_ip     -- IP address of host, can be 0.0.0.0
         host_port   -- Port used by host
         timeout     -- in seconds
@@ -161,6 +156,14 @@ class STF03D:
         print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
 
     def set_calibration(self, units_per_motor_turn: float):
+        """
+        Arguments:
+        units_per_motor_turn -- units could be degree or meter.
+                                Example:
+                                For a rotation stage with gear ratio 1/96 the
+                                conversion factor into degrees would be 360/96,
+                                For a linear stage it would be the lead value of the screw.
+        """
         self._units_per_motor_turn = units_per_motor_turn
 
     def close(self):
