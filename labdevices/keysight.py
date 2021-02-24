@@ -30,10 +30,9 @@ class Preamble(NamedTuple):
     y_reference: _PREAMBLE_TYPES[9]    # specifies the data point where y-origin occurs
 
 
-class Counter:
-    """ Class for the Keysight / Agilent Counter. Tested with the model 53230A.
-    But it should also work for others.
-    """
+class KeysightDevice:
+    """ Parent class for Keysight devices. """
+
     def __init__(self, address: str):
         """
         Arguments:
@@ -54,9 +53,17 @@ class Counter:
         self._device = visa.ResourceManager().open_resource(
             self.device_address, read_termination = '\n'
             )
-        # read_termination='\n',
-        # self.write("*CLS")
         print(f"Connected to:\n{self.idn}")
+
+    def close(self):
+        """ Close the device. """
+        if self._device is None:
+            print('Device already closed.')
+            return
+        self._device.before_close()
+        self._device.close()
+        self._device = None
+
 
     def write(self, cmd: str):
         self._device.write(cmd)
@@ -71,23 +78,37 @@ class Counter:
         idn = self.query("*IDN?")
         return idn
 
+
+class Counter(KeysightDevice):
+    """ Class for the Keysight / Agilent Counter. Tested with the model 53230A.
+    But it should also work for others.
+    """
+
     def reset(self):
         """ Reset device to start from known state. """
         self._device.write('*RST')
         # Clear Error buffer
         self._device.write('*CLS')
 
-    def set_gate_time(self, gatetime: float):
-        """set the gate time of the counter
-        to the desired value in seconds"""
-        self.write(f'FREQuency:GATE:TIME {gatetime}')
-
-    def get_gate_time(self) -> float:
+    @property
+    def gate_time(self) -> float:
         """get the gate time of the counter in seconds"""
         resp = self.query('FREQuency:GATE:TIME?')
         return float(resp)
 
-    def set_trigger_mode(self, mode: str='IMM'):
+    @gate_time.setter
+    def gate_time(self, gatetime: float):
+        """set the gate time of the counter
+        to the desired value in seconds"""
+        self.write(f'FREQuency:GATE:TIME {gatetime}')
+
+    @property
+    def trigger_mode(self) -> str:
+        """ Get the trigger mode """
+        return self.query("TRIGger:SOuRce?")
+
+    @trigger_mode.setter
+    def trigger_mode(self, mode: str='IMM'):
         """Set the trigger mode.
         Argument:
         value -- str, 'IMMediate', 'EXTernal', 'BUS'
@@ -98,11 +119,7 @@ class Counter:
             self.write('*CLS')
             self.write(f'TRIGger:SOURce {mode}')
         else:
-            print('Provide an existing mode')
-
-    def get_trigger_mode(self) -> str:
-        """ Get the trigger mode """
-        return self.query("TRIGger:SOuRce?")
+            raise Exception('Provide an existing mode')
 
     def measure_frequency(
         self, expected: int = 10e6,
@@ -122,20 +139,13 @@ class Counter:
         return float(frequency)
 
 
-    def close(self):
-        """ Close the device. """
-        #Put counter in clear state
-        self._device.before_close()
-        self._device.close()
-
-
-
 class CounterDummy:
     """ Dummy device for Keysight Counter. """
     def __init__(self, address: str):
         self.idn = "Dummy Counter"
         self.address = address
-        self.gatetime = 0.1
+        self.gate_time = 0.1
+        self.trigger_mode = 'NORM'
 
     def initialize(self):
         print(f'connected to {self.idn}')
@@ -143,20 +153,8 @@ class CounterDummy:
     def close(self):
         print('closing connection to device')
 
-    def set_gate_time(self, time: float):
-        self.gatetime = time
-
-    def get_gate_time(self) -> float:
-        return self.gatetime
-
     def reset(self):
         pass
-
-    def set_trigger_mode(self, mode: str):
-        pass
-
-    def get_trigger_mode(self) -> str:
-        return 'NORM'
 
     def measure_frequency(
         self, expected: int = 10e6,
@@ -167,61 +165,16 @@ class CounterDummy:
 
 
 
-class Oscilloscope:
+class Oscilloscope(KeysightDevice):
     """
     Class for Keysight oscilloscopes. So far tested with the 3000T X-Series.
     """
-    def __init__(self, address: str):
-        """
-        Arguments:
-        address -- str, VISA address for USB connection or IP for Ethernet.
-        """
-        self._device = None
-        # Check if address has IP pattern:
-        if bool(re.match(r'^\d+\.\d+\.\d+\.\d+$', address)):
-            self.device_address = (f'TCPIP::{address}::INSTR')
-        # E
-        elif bool(re.match(r'^USB.+::INSTR$', address)):
-            self.device_address = address
-        else:
-            raise ValueError("Address needs to be an IP or a valid VISA address.")
-
-
-    def initialize(self):
-        """Establish connection to device."""
-        self._device = visa.ResourceManager().open_resource(
-            self.device_address, read_termination = '\n'
-            )
-        print(f"Connected to:\n{self.idn}")
-
-    def close(self):
-        """ Close the device """
-        if self._device is None:
-            print("Device is already closed")
-            return
-        self._device.before_close()
-        self._device.close()
-        print("Device closed.")
-
-
-    def query(self, cmd: str) -> str:
-        response = self._device.query(cmd)
-        return response
-
-    def write(self, cmd: str):
-        self._device.write(cmd)
 
     def _ieee_query(self, cmd: str) -> bytes:
         self._device.timeout = 20000
         self.write(cmd)
         response = self._device.query_binary_values(cmd, datatype='s')
         return response[0]
-
-    @property
-    def idn(self):
-        """ Get device identity """
-        idn = self.query("*IDN?")
-        return idn
 
     def set_t_scale(self, sec_per_division: float):
         """ Set the units per division """
@@ -247,7 +200,6 @@ class Oscilloscope:
         result = self.query(":MEASure:VMAX?")
         return float(result)
 
-
     def get_volt_peakpeak(self, channel: int) -> float:
         """ Installs a screen measurement and starts a vertical
         peak-to-peak measurement.
@@ -258,7 +210,7 @@ class Oscilloscope:
         result = self.query(":MEASure:VPP?")
         return float(result)
 
-    def screen_shot(self) -> bytes:
+    def get_screen_shot(self) -> bytes:
         """
         Get an image of the oscilloscope display. The return can be
         simply written to a file.
@@ -272,7 +224,6 @@ class Oscilloscope:
         # Get data
         image_bytes = self._ieee_query(":DISPlay:DATA? PNG, COLor")
         return image_bytes
-
 
     def get_trace(self, channel: int):
         """ Get the trace of a given channel from the oscilloscope.
@@ -363,7 +314,6 @@ class OscilloscopeDummy:
 
     def screen_shot(self):
         pass
-
 
     def get_trace(self, channel: int):
         x_data = np.arange(10)
