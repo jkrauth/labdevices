@@ -11,10 +11,10 @@ This package is in an early stage. Every contribution to improve and extend it i
 - **Allied Vision**: Manta cameras
 - **Applied Motion Products**: Stepper Motor controller STF03D
 - **ANDO**: Spectrum Analyzer AQ-6315A/B
-- **Keysight**: Oscilloscope 3000T X-Series
+- **Keysight**: Oscilloscope 3000T X-Series, Counter 53220A/53230A
 - **Newport**: Positioner Controller SMC100
 - **Pfeiffer Vacuum**: Gauge TPG362
-- **Rohde & Schwarz**: Spectrum Analyzer FPC1000, Oscilloscope ?
+- **Rohde & Schwarz**: Spectrum Analyzer FPC1000, Oscilloscope 3000T X-Series
 - **Stanford Research Systems**: Delay Generator DG645
 - **Thorlabs**: Temperature Sensor TSP01
 

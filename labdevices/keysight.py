@@ -7,17 +7,167 @@ Date created: 2020/11/11
 Python Version: 3.7
 
 """
+from typing import NamedTuple
 from random import random
 import re
 import pyvisa as visa
 import numpy as np
 
+_PREAMBLE_TYPES = (int, int, int, int, float, float, int, float, float, int)
+
+class Preamble(NamedTuple):
+    """ For the data structure of the preamble of a waveform.
+    Contains all the trace settings. Used in Oscilloscope class. """
+    data_format: _PREAMBLE_TYPES[0]    # 0 = BYTE, 1 = WORD, 4 = ASCII
+    data_type: _PREAMBLE_TYPES[1]      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
+    points: _PREAMBLE_TYPES[2]         # number of data points transferred
+    count: _PREAMBLE_TYPES[3]          # 1 and is always 1
+    x_increment: _PREAMBLE_TYPES[4]    # time difference between data points.
+    x_origin: _PREAMBLE_TYPES[5]       # always the first data point in memory
+    x_reference: _PREAMBLE_TYPES[6]    # specifies the data point associated with x-origin
+    y_increment: _PREAMBLE_TYPES[7]    # voltage diff between data points
+    y_origin: _PREAMBLE_TYPES[8]       # value is the voltage at center screen
+    y_reference: _PREAMBLE_TYPES[9]    # specifies the data point where y-origin occurs
+
+
+class Counter:
+    """ Class for the Keysight / Agilent Counter. Tested with the model 53230A.
+    But it should also work for others.
+    """
+    def __init__(self, address: str):
+        """
+        Arguments:
+        address -- str, VISA address for USB connection or IP for Ethernet.
+        """
+        self._device = None
+        # Check if address has IP pattern:
+        if bool(re.match(r'^\d+\.\d+\.\d+\.\d+$', address)):
+            self.device_address = (f'TCPIP::{address}::INSTR')
+        # E
+        elif bool(re.match(r'^USB.+::INSTR$', address)):
+            self.device_address = address
+        else:
+            raise ValueError("Address needs to be an IP or a valid VISA address.")
+
+    def initialize(self):
+        """Establish connection to device."""
+        self._device = visa.ResourceManager().open_resource(
+            self.device_address, read_termination = '\n'
+            )
+        # read_termination='\n',
+        # self.write("*CLS")
+        print(f"Connected to:\n{self.idn}")
+
+    def write(self, cmd: str):
+        self._device.write(cmd)
+
+    def query(self, cmd: str):
+        response = self._device.query(cmd)
+        return response
+
+    @property
+    def idn(self):
+        """ Get device identity """
+        idn = self.query("*IDN?")
+        return idn
+
+    def reset(self):
+        """ Reset device to start from known state. """
+        self._device.write('*RST')
+        # Clear Error buffer
+        self._device.write('*CLS')
+
+    def set_gate_time(self, gatetime: float):
+        """set the gate time of the counter
+        to the desired value in seconds"""
+        self.write(f'FREQuency:GATE:TIME {gatetime}')
+
+    def get_gate_time(self) -> float:
+        """get the gate time of the counter in seconds"""
+        resp = self.query('FREQuency:GATE:TIME?')
+        return float(resp)
+
+    def set_trigger_mode(self, mode: str='IMM'):
+        """Set the trigger mode.
+        Argument:
+        value -- str, 'IMMediate', 'EXTernal', 'BUS'
+        """
+        options = ('IMMediate', 'IMM', 'EXTernal', 'EXT', 'BUS')
+        # clear events register and errors queue
+        if mode in options:
+            self.write('*CLS')
+            self.write(f'TRIGger:SOURce {mode}')
+        else:
+            print('Provide an existing mode')
+
+    def get_trigger_mode(self) -> str:
+        """ Get the trigger mode """
+        return self.query("TRIGger:SOuRce?")
+
+    def measure_frequency(
+        self, expected: int = 10e6,
+        resolution: float=0.1, channel: int=1
+        ) -> float:
+        """Returns frequency measured, within set gettime.
+        Arguments:
+        expected   -- the expected frequency in Hz, default 10 MHz
+        resolution -- measurement resolution in Hz, default 0.1 Hz.
+        channel    -- only usable if device has the option to measure
+                      in channel other than 1.
+        Returns:
+        frequency"""
+        self.reset()
+        cmd = f'MEASure:FREQuency? {expected:.0E}, {resolution}, (@{channel})'
+        frequency = self.query(cmd)
+        return float(frequency)
+
+
+    def close(self):
+        """ Close the device. """
+        #Put counter in clear state
+        self._device.before_close()
+        self._device.close()
+
+
+
+class CounterDummy:
+    """ Dummy device for Keysight Counter. """
+    def __init__(self, instrument: str, connection_type: str):
+        self.instrument = instrument
+        self.connection_type = connection_type
+
+    def initialize(self):
+        print(f'connected to dummy {self.instrument} with {self.connection_type} connection')
+
+    def set_gate_time(self, time:float):
+        print(f'gate time set to {time}')
+        self.gatetime = time
+
+    def get_gate_time(self):
+        print(f'gate time = {self.gatetime}')
+
+    def measure_frequency(self, trigger_source: str, channel: int, gatetime: float):
+        if type(trigger_source) == str:
+            if type(channel) == int:
+                if type(gatetime) == int or type(gatetime) == float:
+                    freq = 10e6
+                    return freq
+                else:
+                    print('gatetime must be float type')
+            else:
+                print('channel must be string type')
+        else:
+            print('trigger source must be string type')
+
+
+    def close(self):
+        print('closing connection to device')
+
 
 
 class Oscilloscope:
     """
-    Class for Keysight oscilloscopes. So far tested with models:
-    ...
+    Class for Keysight oscilloscopes. So far tested with the 3000T X-Series.
     """
     def __init__(self, address: str):
         """
@@ -37,9 +187,20 @@ class Oscilloscope:
 
     def initialize(self):
         """Establish connection to device."""
-        self._device = visa.ResourceManager().open_resource(self.device_address)
-
+        self._device = visa.ResourceManager().open_resource(
+            self.device_address, read_termination = '\n'
+            )
         print(f"Connected to:\n{self.idn}")
+
+    def close(self):
+        """ Close the device """
+        if self._device is None:
+            print("Device is already closed")
+            return
+        self._device.before_close()
+        self._device.close()
+        print("Device closed.")
+
 
     def query(self, cmd: str) -> str:
         response = self._device.query(cmd)
@@ -48,80 +209,130 @@ class Oscilloscope:
     def write(self, cmd: str):
         self._device.write(cmd)
 
-    def ieee_query(self, cmd: str) -> bytes:
+    def _ieee_query(self, cmd: str) -> bytes:
         self._device.timeout = 20000
         self.write(cmd)
         response = self._device.query_binary_values(cmd, datatype='s')
         return response[0]
 
-
     @property
     def idn(self):
+        """ Get device identity """
         idn = self.query("*IDN?")
         return idn
 
-    def set_t_scale(self, cmd):
-        self.write(f":TIMebase:SCALe {cmd}")
+    def set_t_scale(self, sec_per_division: float):
+        """ Set the units per division """
+        self.write(f":TIMebase:SCALe {sec_per_division}")
 
     def get_volt_avg(self, channel: int) -> float:
+        """ Installs a screen measurement and starts an
+        average value measurement.
+        Returns:
+        average value -- float
+        """
         self.write(f":MEASure:SOURce CHANnel{channel}")
         result = self.query(":MEASure:VAVerage?")
         return float(result)
 
     def get_volt_max(self, channel: int) -> float:
+        """ Installs a screen measurement and starts a
+        maximum value measurement.
+        Returns:
+        maximum value -- float
+        """
         self.write(f":MEASure:SOURce CHANnel{channel}")
         result = self.query(":MEASure:VMAX?")
         return float(result)
 
 
     def get_volt_peakpeak(self, channel: int) -> float:
+        """ Installs a screen measurement and starts a vertical
+        peak-to-peak measurement.
+        Returns:
+        peak-to-peak value -- float
+        """
         self.write(f":MEASure:SOURce {channel}")
         result = self.query(":MEASure:VPP?")
         return float(result)
 
-    def screen_shot(self):
+    def screen_shot(self) -> bytes:
         """
+        Get an image of the oscilloscope display. The return can be
+        simply written to a file.
         For some unknown reason, this function only works reliably
         when using ethernet connection to the oscilloscope
+        Returns:
+        png image -- bytes
         """
+        # To get a NOT inverted image
         self.write(":HARDcopy:INKSaver OFF")
-        image_bytes = self.ieee_query(":DISPlay:DATA? PNG, COLor")
+        # Get data
+        image_bytes = self._ieee_query(":DISPlay:DATA? PNG, COLor")
         return image_bytes
 
-    def close(self):
-        if self._device is not None:
-            self._device.before_close()
-            self._device.close()
 
-    def get_trace(self, channel: str):
-
+    def get_trace(self, channel: int):
+        """ Get the trace of a given channel from the oscilloscope.
+        Returns:
+        time, voltage -- as numpy arrays
+        """
         self._device.timeout = 10000
-        self.write(':ACQuire:TYPE NORMal')
-        self.write(f':WAVeform:SOURce {channel}')
-        self.write(':WAVeform:POINts:MODE NORMal')
-        self.write(':WAVeform:FORMat BYTE') #WORD or ASCii are other options
 
-        #time_scale = self.query(':TIMebase:SCALe?')
+        # Prepare waveform and get waveform settings
+        self._prepare_trace_readout(channel)
+        preamble = self.get_preamble(channel)
 
-        preamble = self.query(":WAVeform:PREamble?").split(',')
-        # 0: wave_format, 1: acq_type, 2: points, 3: avg_count, 4: x_increment,
-        # 5: x_origin, 6: x_reference, 7: y_increment, 8: y_origin, 9: y_reference)
+        # Get the voltage data
+        data_bytes = self._ieee_query(":WAVeform:DATA?")
+        voltage = np.asarray(self._bytes_to_voltage(data_bytes, preamble))
 
-        data_bytes = self.ieee_query(":WAVeform:DATA?")
-        n_length = len(data_bytes)
-
-        voltage_conversion = lambda x: (float(x) - float(preamble[9])) * float(preamble[7]) \
-            + float(preamble[8])
-
-        voltage = [voltage_conversion(i) for i in data_bytes]
-
-        x_min = float(preamble[5])
-        step_size = float(preamble[4])
-        x_max = (x_min+(n_length*step_size))
-        time_val = np.arange(x_min, x_max, step_size)
-        #self.write(f':TIMebase:SCALe {time_scale}') #set time scale back to normal
+        # Create time axis
+        x_min = preamble.x_origin
+        x_max = x_min+(preamble.points*preamble.x_increment)
+        time_val = np.arange(x_min, x_max, preamble.x_increment)
         return time_val, voltage
 
+    def _prepare_trace_readout(self, channel: int):
+        """ Moste of these settings are probably already set on the scope.
+        So this is to ensure that it also works when some settings are wrong.
+        """
+        # Set acquisition type to nomal, i.e. not average or smoothing
+        self.write(':ACQuire:TYPE NORMal')
+        # Set source for waveform commands
+        self.write(f':WAVeform:SOURce {channel}')
+        # Set for retrieving measurement record
+        self.write(':WAVeform:POINts:MODE NORMal')
+        # set the data transmission mode to bytes.
+        self.write(':WAVeform:FORMat BYTE')
+
+    @staticmethod
+    def _bytes_to_voltage(data: bytes, preamble: Preamble) -> list:
+        """ Calibrates the data_bytes and returns them as a list.
+        Argument:
+        data -- byte array
+        preamble -- waveform settings
+
+        Returns:
+        list -- data converted to voltage"""
+        func = lambda val: (val - preamble.y_reference) * preamble.y_increment + preamble.y_origin
+        voltage = [func(i) for i in data]
+        return voltage
+
+    def get_preamble(self, channel: int) -> Preamble:
+        """ Requests the preamble information for the selected waveform source.
+        The preamble data contains information concerning the vertical and
+        horizontal scaling of the data of the active channel.
+        Argument:
+        channel -- int
+        Returns:
+        preamble -- Preamble
+        """
+        # Set source for waveform commands
+        self.write(f':WAVeform:SOURce {channel}')
+        respons = self.query(":WAVeform:PREamble?").split(',')
+        parameters = map(lambda x, y: x(y), _PREAMBLE_TYPES, respons)
+        return Preamble(*parameters)
 
 class OscilloscopeDummy:
     """Class for testing purpose only. No device needed."""
@@ -133,28 +344,27 @@ class OscilloscopeDummy:
     def initialize(self):
         print(f"Connected to {self.idn}")
 
-    def finalize(self):
+    def close(self):
         print(f"Closing {self.idn}")
-
-    def get_volt_avg(self, channel: str):
-        self.result = self.result + random()*10
-        return self.result
-
-    def get_volt_max(self, channel: str):
-        self.result = self.result + 1
-        return self.result
-
-    def get_volt_peakpeak(self, channel: str):
-        return random()* 10
 
     def set_t_scale(self, time: float):
         pass
 
-    def close(self):
+    def get_volt_avg(self, channel: int):
+        return random() + channel + self.result
+
+    def get_volt_max(self, channel: int):
+        return random() + channel + self.result
+
+    def get_volt_peakpeak(self, channel: int):
+        return random() + channel + self.result
+
+    def screen_shot(self):
         pass
 
-    def get_trace(self, trace_channel, trace_write_file):
-        x_data = self.result + random()*10
-        y_data = self.result + random()*10
+
+    def get_trace(self, channel: int):
+        x_data = np.arange(10)
+        y_data = np.arange(10)
         print('dummy trace acquired')
         return x_data, y_data
