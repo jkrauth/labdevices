@@ -16,7 +16,7 @@ import numpy as np
 PREAMBLE_TYPES = (int, int, int, int, float, float, int, float, float, int)
 
 class Preamble(NamedTuple):
-    """ For the data structure of the preamble of a waveform.
+    """ The data structure of the preamble of a waveform.
     Contains all the trace settings. Used in Oscilloscope class. """
     data_format: PREAMBLE_TYPES[0]    # 0 = BYTE, 1 = WORD, 4 = ASCII
     data_type: PREAMBLE_TYPES[1]      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
@@ -64,11 +64,12 @@ class KeysightDevice:
         self._device.close()
         self._device = None
 
-
     def write(self, cmd: str):
+        """ Send a command to the device """
         self._device.write(cmd)
 
     def query(self, cmd: str):
+        """ Query  """
         response = self._device.query(cmd)
         return response
 
@@ -172,7 +173,6 @@ class Oscilloscope(KeysightDevice):
 
     def _ieee_query(self, cmd: str) -> bytes:
         self._device.timeout = 20000
-        self.write(cmd)
         response = self._device.query_binary_values(cmd, datatype='s')
         return response[0]
 
@@ -213,9 +213,7 @@ class Oscilloscope(KeysightDevice):
     def get_screen_shot(self) -> bytes:
         """
         Get an image of the oscilloscope display. The return can be
-        simply written to a file.
-        For some unknown reason, this function only works reliably
-        when using ethernet connection to the oscilloscope
+        simply written to a file. Don't forget the binary mode then.
         Returns:
         png image -- bytes
         """
@@ -243,8 +241,8 @@ class Oscilloscope(KeysightDevice):
         # Create time axis
         x_min = preamble.x_origin
         x_max = x_min+(preamble.points*preamble.x_increment)
-        time_val = np.arange(x_min, x_max, preamble.x_increment)
-        return time_val, voltage
+        time = np.arange(x_min, x_max, preamble.x_increment)
+        return time, voltage
 
     def _prepare_trace_readout(self, channel: int):
         """ Moste of these settings are probably already set on the scope.
