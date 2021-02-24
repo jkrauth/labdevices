@@ -132,36 +132,38 @@ class Counter:
 
 class CounterDummy:
     """ Dummy device for Keysight Counter. """
-    def __init__(self, instrument: str, connection_type: str):
-        self.instrument = instrument
-        self.connection_type = connection_type
+    def __init__(self, address: str):
+        self.idn = "Dummy Counter"
+        self.address = address
+        self.gatetime = 0.1
 
     def initialize(self):
-        print(f'connected to dummy {self.instrument} with {self.connection_type} connection')
-
-    def set_gate_time(self, time:float):
-        print(f'gate time set to {time}')
-        self.gatetime = time
-
-    def get_gate_time(self):
-        print(f'gate time = {self.gatetime}')
-
-    def measure_frequency(self, trigger_source: str, channel: int, gatetime: float):
-        if type(trigger_source) == str:
-            if type(channel) == int:
-                if type(gatetime) == int or type(gatetime) == float:
-                    freq = 10e6
-                    return freq
-                else:
-                    print('gatetime must be float type')
-            else:
-                print('channel must be string type')
-        else:
-            print('trigger source must be string type')
-
+        print(f'connected to {self.idn}')
 
     def close(self):
         print('closing connection to device')
+
+    def set_gate_time(self, time: float):
+        self.gatetime = time
+
+    def get_gate_time(self) -> float:
+        return self.gatetime
+
+    def reset(self):
+        pass
+
+    def set_trigger_mode(self, mode: str):
+        pass
+
+    def get_trigger_mode(self) -> str:
+        return 'NORM'
+
+    def measure_frequency(
+        self, expected: int = 10e6,
+        resolution: float=0.1, channel: int=1
+        ) -> float:
+        return float(10e6)
+
 
 
 
