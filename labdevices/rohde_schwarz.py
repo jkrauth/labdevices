@@ -54,16 +54,17 @@ class RSDevice:
         self._device.close()
         self._device = None
 
+    def write(self, cmd: str):
+        """ Write message to device """
+        self._device.write(cmd)
+
     def query(self, cmd: str) -> str:
         """ Query the device. """
         response = self._device.query(cmd)
         return response
 
-    def write(self, cmd: str):
-        """ Write message to device """
-        self._device.write(cmd)
-
     def ieee_query(self, cmd: str) -> bytes:
+        """ Query binary data. Used mostly for screenshots. """
         #self._device.timeout = 20000
         response = self._device.query_binary_values(cmd, datatype='s')
         return response[0]

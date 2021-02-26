@@ -73,6 +73,12 @@ class KeysightDevice:
         response = self._device.query(cmd)
         return response
 
+    def ieee_query(self, cmd: str) -> bytes:
+        """ Query binary data. Used mostly for screenshots. """
+        #self._device.timeout = 20000
+        response = self._device.query_binary_values(cmd, datatype='s')
+        return response[0]
+
     @property
     def idn(self):
         """ Get device identity """
