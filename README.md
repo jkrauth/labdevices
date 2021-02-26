@@ -2,21 +2,27 @@
 
 # labdevices
 
-The goal of this python package is to provide simple software drivers for the use of typical devices found in atomic physics research labs.
+SDK for typical devices found in an atomic physics research lab.
 
 This package is in an early stage. Every contribution to improve and extend it is welcome.
 
-## Included Devices are from
+## Included Devices
 
-- **Allied Vision**: Manta cameras
-- **Applied Motion Products**: Stepper Motor controller STF03D
-- **ANDO**: Spectrum Analyzer AQ-6315A/B
-- **Keysight**: Oscilloscope 3000T X-Series, Counter 53220A/53230A
-- **Newport**: Positioner Controller SMC100
-- **Pfeiffer Vacuum**: Gauge TPG362
-- **Rohde & Schwarz**: Spectrum Analyzer FPC1000, Oscilloscope 3000T X-Series
-- **Stanford Research Systems**: Delay Generator DG645
-- **Thorlabs**: Temperature Sensor TSP01
+The given links guide you to the programmer manuals.
+
+| Company                   | Model                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| ANDO                      | [AQ-6315A/B](https://cdn.tmi.yokogawa.com/ASS-62408E-01Y_010.pd.pdf) spectrum analyzer |
+| Allied Vision             | [GigE](https://cdn.alliedvision.com/fileadmin/content/documents/products/cameras/various/features/Camera_and_Driver_Attributes.pdf) cameras |
+| Applied Motion Products   | [STF03D](https://appliedmotion.s3.amazonaws.com/Host-Command-Reference_920-0002V.pdf) stepper motor controller |
+| Keysight                  | [3000T X-Series](http://literature.cdn.keysight.com/litweb/pdf/75037-97025.pdf) oscilloscope |
+|                           | [53220A/53230A](53220A/53230A ) counter                      |
+| Newport                   | [SMC100](https://www.newport.com/medias/sys_master/images/images/h8d/h3a/8797263101982/SMC100CC-SMC100PP-User-Manual.pdf) positioner controller |
+| Pfeiffer Vacuum           | [TPG362](https://www.ajvs.com/library/Pfeiffer_Vacuum_TPG_361_TPG_362_Manual.pdf) vacuum gauge |
+| Rohde & Schwarz           | [FPC1000](https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/pdm/cl_manuals/user_manual/1178_4130_01/FPC_UserManual_en_09.pdf) spectrum analyzer |
+|                           | [RTB2000](https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/pdm/cl_manuals/user_manual/1333_1611_01/RTB_UserManual_en_10.pdf) oscilloscope |
+| Stanford Research Systems | [DG645](https://www.thinksrs.com/downloads/pdfs/manuals/DG645m.pdf) delay generator |
+| Thorlabs                  | [TSP01](https://www.thorlabs.com/drawings/d3a8b683b1da6c0e-C643E761-F31E-E669-C6BC10DCC87ABBE3/TSP01-Manual.pdf) temperature sensor |
 
 ## Installation
 
@@ -41,7 +47,7 @@ conda activate <name>
 Clone the repository. From inside the package folder run
 
 ```console
-python setup.py develop
+pip install -e .
 ```
 
  Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
