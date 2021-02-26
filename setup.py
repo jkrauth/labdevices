@@ -8,6 +8,9 @@ Python Version: 3.7
 """
 from setuptools import setup, find_packages
 
+with open('requirements.txt') as fh:
+    requirements = [line.strip() for line in fh]
+
 setup(
     name='labdevices',
     version='0.7',
@@ -15,14 +18,7 @@ setup(
     license="MIT License",
     packages=find_packages(),
     python_requires='>=3.6',
-    install_requires=[
-        'pyyaml',
-        'numpy',
-        'pymba',
-        'pyvisa',
-        'pyvisa-py',
-        'pyusb',
-    ],
+    install_requires=requirements,
     # For modules which have no entry in pypi.org, dependency
     # links have to be provided. They exist of a link to the
     # project on github + an appendix of the shape
