@@ -22,94 +22,8 @@ class Preamble(NamedTuple):
     values_per_sample: PREAMBLE_TYPES[3]    # usually 1
 
 
-class FPC1000:
-    """Simple spectrum analyzer.
-    Works for with an Ethernet connection.
-    It can be connected via USB, but is not a normal USB device.
-    When connected via USB use address = '172.16.10.10'
-    This is currently not supported Linux it seems.
-    """
-    def __init__(self, address: str):
-        """
-        Arguments:
-        address -- str, IP address.
-        """
-        self._device = None
-        # Check if address has IP pattern:
-        if bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
-            self.device_address = (f'TCPIP::{address}')
-        else:
-            raise ValueError("Address needs to be an IP address.")
-
-    def initialize(self):
-        """Connect to the device"""
-        self._device = pyvisa.ResourceManager().open_resource(self.device_address)
-        print(f'Connected to {self.idn}')
-
-    @property
-    def idn(self) -> str:
-        """Returns the identification string of the device."""
-        return self.query('*IDN?')
-
-    def close(self):
-        """Close connection to the device"""
-        if self._device is None:
-            print('FPC1000 is already closed.')
-        self._device.before_close()
-        self._device.close()
-        self._device = None
-
-    def query(self, cmd: str) -> str:
-        """Send a command and receive the answer"""
-        respons = self._device.query(cmd).rstrip()
-        return respons
-
-    def get_trace(self):
-        """Get the trace which is currently shown on the display.
-        For some reason this function sometimes times out.
-        Increasing the timeout time couldn't solve the issue.
-        Returns:
-        x, y -- as numpy arrays.
-        """
-        # Get y data
-        raw_y = self.query('TRAC:DATA? TRACE1').split(',')
-        y_data = np.asarray(raw_y).astype(np.float)
-        points = len(y_data)
-        # Get x data
-        x_start = float(self.query('FREQ:STAR?'))
-        x_stop = float(self.query('FREQ:STOP?'))
-        x_data = np.linspace(x_start, x_stop, points)
-        return x_data, y_data
-
-    def get_system_alarm(self) -> str:
-        """Return system alarms and clear alarm buffer."""
-        respons = self._device.query('SYST:ERR:ALL?')
-        return respons
-
-
-class FPC1000Dummy:
-    """ For testing only """
-    def __init__(self, address: str):
-        self.address = address
-        self.idn = 'dummy'
-
-    def initialize(self):
-        pass
-
-    def close(self):
-        pass
-
-    def get_trace(self):
-        x_data = np.arange(10)
-        y_data = np.arange(10)
-        return x_data, y_data
-
-
-class Oscilloscope:
-    """
-    Is tested with the following Rohde & Schwarz oscilloscope
-    Tested with models: RTB2000
-    """
+class RSDevice:
+    """ Baseclass for Rohde & Schwarz devices according to SCPI standard. """
     def __init__(self, address: str):
         """
         Arguments:
@@ -132,16 +46,25 @@ class Oscilloscope:
             )
         print(f"Connected to:\n{self.idn}")
 
+    def close(self):
+        """ Close the device. """
+        if self._device is None:
+            print('Device already closed.')
+        self._device.before_close()
+        self._device.close()
+        self._device = None
 
     def query(self, cmd: str) -> str:
-        response = self._device.query(cmd).strip('\n\x00\x00\x00')
+        """ Query the device. """
+        response = self._device.query(cmd)
         return response
 
     def write(self, cmd: str):
+        """ Write message to device """
         self._device.write(cmd)
 
     def ieee_query(self, cmd: str) -> bytes:
-        self._device.timeout = 20000
+        #self._device.timeout = 20000
         response = self._device.query_binary_values(cmd, datatype='s')
         return response[0]
 
@@ -150,6 +73,83 @@ class Oscilloscope:
         """ Get device identity """
         idn = self.query("*IDN?")
         return idn
+
+    def get_system_alarm(self) -> list:
+        """Query system alarms and clear alarm buffer.
+        Returns:
+        list of tuples with error code and description
+        """
+        raw = self._device.query('SYST:ERR:ALL?').strip().split(',')
+        # Formatting answer into list of tuples
+        respons = [(int(raw[i]), raw[i+1].strip('"')) for i in range(0, len(raw), 2)]
+        return respons
+
+
+
+class FPC1000(RSDevice):
+    """Simple spectrum analyzer.
+    Works for now via Ethernet.
+    It can be connected via USB, but is not a normal USB device.
+    When connected via USB use address = '172.16.10.10'
+    This is currently not supported in Linux it seems.
+    """
+    def __init__(self, address: str):
+        """
+        Arguments:
+        address -- str, IP address.
+        """
+        # Must be IP address:
+        if not bool(re.match(r'\d+\.\d+\.\d+\.\d+', address)):
+            raise ValueError("Address needs to be an IP address.")
+        super().__init__(address)
+
+    def get_trace(self):
+        """Get the trace which is currently shown on the display.
+        Returns:
+        x, y -- as numpy arrays.
+        """
+        # Get y data
+        raw_y = self.query('TRACe:DATA? TRACE1').split(',')
+        y_data = np.asarray(raw_y).astype(np.float)
+        points = len(y_data)
+        # Get x data
+        x_start = float(self.query('FREQ:STAR?'))
+        x_stop = float(self.query('FREQ:STOP?'))
+        x_data = np.linspace(x_start, x_stop, points)
+        return x_data, y_data
+
+
+
+class FPC1000Dummy:
+    """ For testing only """
+    def __init__(self, address: str):
+        self.address = address
+        self.idn = 'dummy'
+
+    def initialize(self):
+        pass
+
+    def close(self):
+        pass
+
+    def get_trace(self):
+        x_data = np.arange(10)
+        y_data = np.arange(10)
+        return x_data, y_data
+
+
+class Oscilloscope(RSDevice):
+    """
+    Is tested with the following Rohde & Schwarz oscilloscope
+    Tested with models: RTB2000
+    """
+
+    def query(self, cmd: str) -> str:
+        """Query the device."""
+        # Strip off a few characters that happen to be there
+        # via USB connection... not sure why.
+        return super().query(cmd).strip('\n\x00\x00\x00')
+
 
     def get_volt_avg(self, channel: int) -> float:
         """ Installs a screen measurement and starts an
@@ -221,14 +221,6 @@ class Oscilloscope:
     def set_t_scale(self, time: str):
         """format example: '1.E-9'"""
         self.write(cmd = f":TIMebase:SCALe {time}")
-
-    def close(self):
-        """ Close the device. """
-        if self._device is None:
-            print('Device already closed.')
-        self._device.before_close()
-        self._device.close()
-        self._device = None
 
 
 class OscilloscopeDummy:
