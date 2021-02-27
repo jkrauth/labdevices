@@ -24,9 +24,10 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/jkrauth/labdevices',
     author='Julian Krauth',
+    author_email='j.krauth@vu.nl',
     license="MIT",
     classifiers=[
-        "License :: OSI Approved :: MIT License"
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
     ],
     packages=find_packages(),

@@ -26,6 +26,7 @@ The given links guide you to the programmer manuals.
 
 Most dependencies are installed automatically. For some devices, however, there are exceptions that need to be installed manually:
 
+- ANDO spectrometer: [prologix-gpib-ethernet](https://github.com/nelsond/prologix-gpib-ethernet)
 - Allied Vision GigE cameras: [Vimba SDK](https://www.alliedvision.com/en/products/software.html#agb-modal-content-5496)
 
 ## Installation
