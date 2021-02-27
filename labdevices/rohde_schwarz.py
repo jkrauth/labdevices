@@ -85,8 +85,6 @@ class RSDevice:
         respons = [(int(raw[i]), raw[i+1].strip('"')) for i in range(0, len(raw), 2)]
         return respons
 
-
-
 class FPC1000(RSDevice):
     """Simple spectrum analyzer.
     Works for now via Ethernet.
