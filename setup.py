@@ -8,6 +8,7 @@ Python Version: 3.7
 """
 import pathlib
 from setuptools import setup, find_packages
+from labdevices import __version__
 
 HERE = pathlib.Path(__file__).parent
 
@@ -18,7 +19,7 @@ with open(HERE / 'requirements.txt') as fh:
 
 setup(
     name='labdevices',
-    version='0.8.0',
+    version=__version__,
     description='SDK for typical devices found in an atomic physics research lab.',
     long_description=README,
     long_description_content_type='text/markdown',
