@@ -1,6 +1,5 @@
-pyyaml
 numpy
 pymba
-pyvisa
-pyvisa-py
 pyusb
+PyVISA
+PyVISA-py
