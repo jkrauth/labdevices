@@ -4,9 +4,7 @@
 
 SDK for typical devices found in an atomic physics research lab.
 
-This package is in an early stage. Every contribution to improve and extend it is welcome.
-
-## Included Devices
+## Included devices
 
 The given links guide you to the programmer manuals.
 
@@ -24,23 +22,16 @@ The given links guide you to the programmer manuals.
 | Stanford Research Systems | [DG645](https://www.thinksrs.com/downloads/pdfs/manuals/DG645m.pdf) delay generator |
 | Thorlabs                  | [TSP01](https://www.thorlabs.com/drawings/d3a8b683b1da6c0e-C643E761-F31E-E669-C6BC10DCC87ABBE3/TSP01-Manual.pdf) temperature sensor |
 
+## Third party dependencies
+
+Most dependencies are installed automatically. For some devices, however, there are exceptions that need to be installed manually:
+
+- ANDO Spectrum Analyzer: [prologix-gpib-ethernet](https://github.com/nelsond/prologix-gpib-ethernet)
+- Allied Vision GigE cameras: [Vimba SDK](https://www.alliedvision.com/en/products/software.html#agb-modal-content-5496)
+
 ## Installation
 
-Dependencies are installed automatically. The only exception is the [prologix-gpib-ethernet](https://github.com/nelsond/prologix-gpib-ethernet) package that has to be installed manually. It is only needed for the use of the ANDO Spectrum Analyzer.
-
-It is recommended to work in a new virtual environment when installing this package.
-
-Create e.g. a conda virtual environment as
-
-```console
-conda create -n <name> python=3.6
-```
-
-where `<name>` is your environment name. The python version should be 3.6 or higher. Then activate the environment with
-
-```console
-conda activate <name>
-```
+It is recommended to install the package into a virtual environment.
 
 ### A) For development
 
@@ -50,25 +41,17 @@ Clone the repository. From inside the package folder run
 pip install -e .
 ```
 
- Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
+ Changes in the code will then be reflected when reimporting the labdevices package. No new installation necessary.
 
 ### B) For general use
 
-With the activated conda environment run
-
 ```console
-pip install https://github.com/jkrauth/labdevices.git
-```
-
-If there have been updates in the repo you then can upgrade the installation with:
-
-```console
-pip install --upgrade https://github.com/jkrauth/labdevices.git
+pip install labdevices
 ```
 
 ## Usage
 
-Once the labdevices package is installed into a conda environment you can simply do e.g.
+Once the labdevices package is installed simply do e.g.
 
 ```python
 from labdevices.thorlabs import TSP01
@@ -81,32 +64,6 @@ from labdevices.thorlabs import TSP01Dummy
 ```
 
 with *Dummy* added to the device's class name.
-
-## Contributing
-
-Add new drivers or improve existing ones.
-
-Quick step guideline:
-
-1. Fork the project
-
-2. Create your feature branch
-
-3. Commit changes
-
-4. Push to the branch
-
-5. Open a pull request
-
-Add a new class in a file that carries the name of its company. If any non-standard packages are required, add them to the list in the setup.py file.
-
-New drivers should be tested before the changes are merged into the master branch. Same applies for modifications to already existing modules: Test them before you push.
-
-Please keep in mind to:
-
-- check your code with pylint
-- for new modules always add a module header with name, author, date.
-- not include paths for saving files, VISA addresses of specific devices, etc., that should be part of your local application.
 
 ## Troubleshooting
 
