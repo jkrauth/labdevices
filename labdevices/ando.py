@@ -45,7 +45,7 @@ class SpectrumAnalyzer:
         self._device.connect()
         self._device.select(self.gpib)
 
-        idn = self.send_query('*IDN?')
+        idn = self.query('*IDN?')
         idn_respons = [
             "Manufacturer: ",
             "Device name: ",
@@ -57,10 +57,10 @@ class SpectrumAnalyzer:
             print(idn_respons[i], each)
             i+=1
 
-    def send_cmd(self, cmd:str):
+    def write(self, cmd:str):
         self._device.write(cmd)
 
-    def send_query(self, query:str):
+    def query(self, query:str):
         query = self._device.query(query)
         query = query.rstrip('\r\n')
         query = query.split(',')
@@ -74,7 +74,7 @@ class SpectrumAnalyzer:
     @property
     def sampling(self) -> int:
         """ Get sampling rate"""
-        smpl = self.send_query('SMPL?')
+        smpl = self.query('SMPL?')
         return int(smpl[0])
 
     @sampling.setter
@@ -83,7 +83,7 @@ class SpectrumAnalyzer:
         if smpl<11 or smpl>1001:
             print("Use a sampling number from 11 to 1001!")
         else:
-            self.send_cmd(f'SMPL{smpl}')
+            self.write(f'SMPL{smpl}')
 
 
     def close(self):
@@ -98,7 +98,7 @@ class SpectrumAnalyzer:
         Does a sweep with the current settings and saves the data in a buffer.
         Read out the buffer using self.getData()
         """
-        self.send_cmd('SGL')
+        self.write('SGL')
 
     def _get_data(self, cmd:str):
         """
@@ -112,7 +112,7 @@ class SpectrumAnalyzer:
         i_rep = 50
         for i in range(i_rep):
             #get data
-            axis = self.send_query('%s R%i-R%i' % (cmd,step*i+1,step*(i+1)))
+            axis = self.query('%s R%i-R%i' % (cmd,step*i+1,step*(i+1)))
             axis = axis[1:]
             axis = np.array(axis, dtype = float)
             if i == 0:
@@ -132,7 +132,7 @@ class SpectrumAnalyzer:
         this method only works when ANDO is in a certain mode???
         Haven't figured that out yet...
         """
-        analysis = self.send_query('ANA?')
+        analysis = self.query('ANA?')
         if len(analysis) == 3:
             center_wavelength = analysis[0]
             bandwidth         = analysis[1]
@@ -150,7 +150,7 @@ class SpectrumAnalyzer:
         Get the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
         """
-        wavelength = self.send_query('CTRWL?')
+        wavelength = self.query('CTRWL?')
         return float(wavelength[0])
 
     @center.setter
@@ -159,7 +159,7 @@ class SpectrumAnalyzer:
         Set the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
         """
-        self.send_cmd('CTRWL%f' % (wavelength))
+        self.write('CTRWL%f' % (wavelength))
 
     @property
     def span(self) -> float:
@@ -167,7 +167,7 @@ class SpectrumAnalyzer:
         Get the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
         """
-        span = self.send_query('SPAN?')
+        span = self.query('SPAN?')
         return float(span[0])
 
     @span.setter
@@ -176,7 +176,7 @@ class SpectrumAnalyzer:
         Set the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
         """
-        self.send_cmd('SPAN%f' % (span))
+        self.write('SPAN%f' % (span))
 
     @property
     def cw_mode(self) -> int:
@@ -185,7 +185,7 @@ class SpectrumAnalyzer:
         0 pulsed mode
         1 cw mode
         """
-        continuous_wave = self.send_query('CWPLS?')
+        continuous_wave = self.query('CWPLS?')
         return int(continuous_wave[0])
 
     @cw_mode.setter
@@ -196,9 +196,9 @@ class SpectrumAnalyzer:
         1 cw mode
         """
         if cw == 0:
-            self.send_cmd('PLMES')
+            self.write('PLMES')
         elif cw == 1:
-            self.send_cmd('CLMES')
+            self.write('CLMES')
         else:
             print(cw)
             print("ANDO mode number has to be either 0 or 1!")
@@ -211,7 +211,7 @@ class SpectrumAnalyzer:
         needs the rough pulse repetition time.
         Unit: ms
         """
-        self.send_cmd(f'PKHLD{time}')
+        self.write(f'PKHLD{time}')
 
 
 class SpectrumAnalyzerDummy:
