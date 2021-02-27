@@ -32,13 +32,4 @@ setup(
     packages=find_packages(),
     python_requires='>=3.6',
     install_requires=requirements,
-    # For modules which have no entry in pypi.org, dependency
-    # links have to be provided. They exist of a link to the
-    # project on github + an appendix of the shape
-    # '/tarball/master#egg=<PACKAGE_NAME>-<VERSION>',
-    # where <VERSION> is the git tag to use.
-    #dependency_links=[
-    #    'git+https://github.com/nelsond/prologix-gpib-ethernet/'\
-    #    'tarball/master#egg=prologix-gpib-ethernet-0.1.2'
-    #]
 )
