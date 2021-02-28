@@ -43,6 +43,8 @@ pip install -e .
 
  Changes in the code will then be reflected when reimporting the labdevices package. No new installation necessary.
 
+There is also a Jupyter Notebook provided that contains some use examples and is handy for development.
+
 ### B) For general use
 
 ```console
@@ -51,7 +53,7 @@ pip install labdevices
 
 ## Usage
 
-Once the labdevices package is installed simply do e.g.
+Once the labdevices package is installed, for example simply do
 
 ```python
 from labdevices.thorlabs import TSP01
@@ -69,7 +71,7 @@ with *Dummy* added to the device's class name.
 
 ### Ubuntu
 
-If you want to read a VISA address with the pyvisa package and you get the following message
+If you want to read a VISA address with the pyvisa package and you get a message of the following type
 
 > Found a device whose serial number cannot be read. The partial VISA resource name is: USB0::2733::443::???::2::INSTR
 
