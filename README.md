@@ -1,4 +1,4 @@
-[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md)
+[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md) [![MIT licensed](https://img.shields.io/pypi/v/labdevices)](https://pypi.org/project/labdevices/)
 
 # labdevices
 
