@@ -189,18 +189,18 @@ class SpectrumAnalyzer:
         return int(continuous_wave[0])
 
     @cw_mode.setter
-    def cw_mode(self, cw: int):
+    def cw_mode(self, mode: int):
         """
         Get/Set measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
         1 cw mode
         """
-        if cw == 0:
+        if mode == 0:
             self.write('PLMES')
-        elif cw == 1:
+        elif mode == 1:
             self.write('CLMES')
         else:
-            print(cw)
+            print(mode)
             print("ANDO mode number has to be either 0 or 1!")
 
 
