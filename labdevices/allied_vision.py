@@ -23,44 +23,56 @@ Python Version: 3.7
 import numpy as np
 import pymba
 
+def get_available_cameras() -> list:
+    """ Find and show the cameras connected to the network. """
+    vimba = pymba.Vimba()
+    vimba.startup()
+    devices = vimba.camera_ids()
+    return devices
+
 class Manta:
     """
     Driver class for the GigE Allied Vision Manta Cameras.
     """
-    def __init__(self, camera_id: str):
+    def __init__(self, device_id: str):
         """
         Arguments:
         camera_id -- str, usually in a format like 'DEV_000F314E1E59'
         """
         # Start the camera package
         self.vimba = pymba.Vimba()
-        self.vimba.startup()
 
-        # Find cameras and pick correct index.
-        camera_ids = self.vimba.camera_ids()
-        print ("Available cameras : %s" % (camera_ids))
         # Find correct camera index
-        self.device_id = camera_id
-        for index, identity in enumerate(camera_ids):
-            if self.device_id == identity:
-                self.device_index = index
-                break
+        self.device_id = device_id
 
         # This will become the camera.
         self._device = None
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Establish connection to camera"""
-        self._device = self.vimba.camera(self.device_index)
-        self._device.open()
-        print(f"Connected to camera : {self.device_id}")
-
+        self.vimba.startup()
+        devices = self.vimba.camera_ids()
+        for index, identity in enumerate(devices):
+            if self.device_id == identity:
+                device_index = index
+                self._device = self.vimba.camera(device_index)
+                self._device.open()
+                print(f"Connected to camera : {self.idn}")
+                return
+        print('Camera not found.')
+        self.vimba.shutdown()
 
     def close(self):
         """Close connection to camera"""
         if self._device is not None:
             self._device.close()
             self.vimba.shutdown()
+            self._device = None
+
+    @property
+    def idn(self) -> str:
+        """ Return the device ID """
+        return self.device_id
 
     @property
     def model_name(self) -> str:
@@ -215,8 +227,8 @@ class Manta:
 class MantaDummy:
     """Manta class for testing. It doesn't need any device connected."""
 
-    def __init__(self, camera_id=1):
-        self.camera_id = camera_id
+    def __init__(self, device_id: str):
+        self.idn = "Dummy " + device_id
         self._device = None
         self.height = 1216
         self.width = 1936
