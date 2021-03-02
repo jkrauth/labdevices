@@ -30,6 +30,8 @@ setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering :: Physics",
+        "Intended Audience :: Science/Research",
     ],
     packages=find_packages(),
     python_requires='>=3.6',
