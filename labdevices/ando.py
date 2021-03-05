@@ -100,7 +100,7 @@ class SpectrumAnalyzer:
         """
         self.write('SGL')
 
-    def _get_data(self, cmd:str):
+    def _get_data(self, cmd: str) -> np.ndarray:
         """
         Retreives x or y data.
 
@@ -121,10 +121,10 @@ class SpectrumAnalyzer:
                 x_data = np.append(x_data,axis)
         return x_data
 
-    def get_x_axis(self):
+    def get_x_axis(self) -> np.ndarray:
         return self._get_data('WDATA')
 
-    def get_y_data(self):
+    def get_y_data(self) -> np.ndarray:
         return self._get_data('LDATA')
 
     def get_ana(self):
@@ -204,12 +204,13 @@ class SpectrumAnalyzer:
             print("ANDO mode number has to be either 0 or 1!")
 
 
-    def peak_hold_mode(self, time:int):
+    def peak_hold_mode(self, time: int):
         """
-        If in pulsed mode (see cwMode method) the Ando can use three
-        different ways to trigger. One is the peakHoldMode, which
+        If in pulsed mode (see cw_mode method) the Ando can use three
+        different ways to trigger. One is the peak_hold_mode, which
         needs the rough pulse repetition time.
-        Unit: ms
+        Argument:
+        time - int, in ms
         """
         self.write(f'PKHLD{time}')
 

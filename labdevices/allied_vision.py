@@ -158,7 +158,7 @@ class Manta:
         else:
             raise Exception(f"Value '{mode}' for acquisition mode is not valied")
 
-    def take_single_img(self):
+    def take_single_img(self) -> np.ndarray:
         """
         Sets everything to create a single image, takes the image
         and returns it.
