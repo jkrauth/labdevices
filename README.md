@@ -1,12 +1,12 @@
-[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md) [![MIT licensed](https://img.shields.io/pypi/v/labdevices)](https://pypi.org/project/labdevices/)
-
 # labdevices
 
-SDK for typical devices found in an atomic physics research lab.
+[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md) [![MIT licensed](https://img.shields.io/pypi/v/labdevices)](https://pypi.org/project/labdevices/)
+
+SDK for devices used in our atomic physics research lab. Since there is probably more of those devices used in other labs as well, this package might be of a more general use.
 
 ## Included devices
 
-The given links guide you to the programmer manuals.
+The given links guide you to the programmer manuals of the included devices.
 
 | Company                   | Model                                                        |
 | ------------------------- | ------------------------------------------------------------ |
@@ -15,6 +15,7 @@ The given links guide you to the programmer manuals.
 | Applied Motion Products   | [STF03D](https://appliedmotion.s3.amazonaws.com/Host-Command-Reference_920-0002V.pdf) stepper motor controller |
 | Keysight                  | [3000T X-Series](http://literature.cdn.keysight.com/litweb/pdf/75037-97025.pdf) oscilloscope |
 |                           | [53220A/53230A](53220A/53230A ) counter                      |
+| Kuhne Electronic          | [MKU LO 8-13 PLL](https://shop.kuhne-electronic.com/kuhne/en/shop/amateur-radio/signal-sources/oscillators/MKU+LO+813+PLL++Oscillator/?card=1714#_tab_content6) local oscillator  |
 | Newport                   | [SMC100](https://www.newport.com/medias/sys_master/images/images/h8d/h3a/8797263101982/SMC100CC-SMC100PP-User-Manual.pdf) positioner controller |
 | Pfeiffer Vacuum           | [TPG362](https://www.ajvs.com/library/Pfeiffer_Vacuum_TPG_361_TPG_362_Manual.pdf) vacuum gauge |
 | Rohde & Schwarz           | [FPC1000](https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/pdm/cl_manuals/user_manual/1178_4130_01/FPC_UserManual_en_09.pdf) spectrum analyzer |
