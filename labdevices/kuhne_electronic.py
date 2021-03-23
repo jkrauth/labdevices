@@ -19,6 +19,14 @@ def get_available_devices():
     dev_list = pyvisa.ResourceManager().list_resources()
     return dev_list
 
+DEFAULTS = {'write_termination': None,
+            'read_termination': '\r\n',
+            'baud_rate': 115200,
+            'parity': pyvisa.constants.Parity.none,
+            'data_bits': 8,
+            'stop_bits': pyvisa.constants.StopBits.one,
+            'flow_control': pyvisa.constants.VI_ASRL_FLOW_NONE,
+}
 
 class LocalOscillator:
     """ This class is written for the MKU LO 8-13 PLL local oscillator from Kuhne Electronic.
@@ -30,15 +38,8 @@ class LocalOscillator:
 
     def initialize(self):
         """ Connect to the device. """
-        self.device = pyvisa.ResourceManager().open_resource(
-            self.address,
-            baud_rate = 115200,
-            data_bits = 8,
-            stop_bits = pyvisa.constants.StopBits.one,
-            parity = pyvisa.constants.Parity.none,
-            read_termination = '\r\n',
-            write_termination = None,
-            flow_control=pyvisa.constants.VI_ASRL_FLOW_NONE,
+        self.device = pyvisa.ResourceManager('@py').open_resource(
+            self.address, **DEFAULTS
         )
         sleep(0.1)
         print(f'Connected to: {self.address}')
@@ -71,7 +72,7 @@ class LocalOscillator:
         _ = self.query(command2)
         sleep(0.1)
         _ = self.query(command3)
-        print(f'Frequency set to {ghz} GHz, {mhz} MHz, and {khz} kHz.')
+        print(f'Frequency set to {ghz:02d} GHz, {int(mhz):03d} MHz, and {int(khz):03d} kHz.')
 
 
 if __name__ == "__main__":
