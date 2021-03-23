@@ -5,7 +5,7 @@ Set to 7.02GHz, the main output yields the second harmonic at 14.04GHz.
 
 An example of how to run the code is found at the end of this file.
 
-File name: oscillator.py
+File name: kuhne_electronic.py
 Author: Julian Krauth
 Date created: 2019/05/22
 Python Version: 3.7
