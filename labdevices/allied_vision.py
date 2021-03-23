@@ -88,14 +88,22 @@ class Manta:
         self._device.GVSPPacketSize=value
 
     @property
-    def exposure(self) -> int:
-        """Exposure in microseconds"""
-        expos = self._device.ExposureTimeAbs
+    def exposure(self) -> float:
+        """
+        Returns:
+        exposure -- float, in seconds
+        """
+        expos = float(self._device.ExposureTimeAbs)
         return expos*1e-6
 
     @exposure.setter
-    def exposure(self, expos: int):
-        self._device.ExposureTimeAbs = expos*1e6
+    def exposure(self, expos: float):
+        """Sets exposure time of the camera
+        Argument:
+        exposure -- int, in seconds
+        """
+        # Convert to microseconds and set value
+        self._device.ExposureTimeAbs = int(expos*1e6)
 
     @property
     def gain(self):
