@@ -129,7 +129,7 @@ class Counter(KeysightDevice):
             raise Exception('Provide an existing mode')
 
     def measure_frequency(
-        self, expected: int = 10e6,
+        self, expected: float = 10e6,
         resolution: float=0.1, channel: int=1
         ) -> float:
         """Returns frequency measured, within set gettime.
