@@ -21,7 +21,8 @@ class DeviceMeta(type):
             hasattr(subclass, 'write') and
             callable(subclass.write) and
             hasattr(subclass, 'query') and
-            callable(subclass.query)
+            callable(subclass.query) and
+            hasattr(subclass, 'idn')
         )
 
 class Device(metaclass=DeviceMeta):
@@ -38,6 +39,7 @@ class KeysightTest(unittest.TestCase):
     def test_oscilloscope_interface(self):
         # self.assertTrue(issubclass(keysight.Oscilloscope, Device))
         self.assertIsInstance(self.oscilloscope, Device)
+        self.assertTrue(hasattr(self.oscilloscope, '_device'))
 
     def test_counter_interface(self):
         self.assertIsInstance(self.counter, Device)
