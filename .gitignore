@@ -1,3 +1,7 @@
 *.py~
 __pycache__
 labdevices.egg-info
+.vscode
+.ipynb_checkpoints
+dist
+build

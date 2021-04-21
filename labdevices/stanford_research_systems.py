@@ -47,12 +47,14 @@ class DG645:
         """
         self.tcp = tcp
         self.port = port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(timeout)
+        self._device = None
+        self.timeout = timeout
 
     def initialize(self):
         """Connect to the device."""
-        self.sock.connect((self.tcp, self.port))
+        self._device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._device.settimeout(self.timeout)
+        self._device.connect((self.tcp, self.port))
         time.sleep(0.2)
         print('bla')
         print(f'Connected to:\n    {self.idn}')
@@ -60,7 +62,7 @@ class DG645:
     def close(self):
         """Closing connection with the device"""
         print(f'Close connection with:\n    {self.idn}')
-        self.sock.close()
+        self._device.close()
 
 
     def write(self, cmd: str) -> None:
@@ -70,12 +72,12 @@ class DG645:
         cmd += termination_char
         cmd = cmd.encode()
         # Send command
-        self.sock.send(cmd)
+        self._device.send(cmd)
 
     def query(self, cmd: str) -> str:
         """Send a request to the device and return its respons."""
         self.write(cmd)
-        respons = self.sock.recv(256)
+        respons = self._device.recv(256)
         respons = respons.decode()
         # Strip off read termination character
         return respons.rstrip()
@@ -115,7 +117,7 @@ class DG645:
             channel = self.DEFAULTS['channel'][channel]
         cmd = f'DLAY? {channel}'
         respons = self.query(cmd)
-        reference = respons[0]
+        #reference = respons[0]
         delay = float(respons[2:])
         return delay
 
@@ -133,9 +135,10 @@ class DG645:
         return respons
 
 
-class DG645DUMMY(DG645):
+class DG645Dummy(DG645):
     """For testing purpose only. No device needed."""
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
+        super().__init__(tcp, port)
         self.idn = 'Dummy DG645'
 
     def initialize(self):

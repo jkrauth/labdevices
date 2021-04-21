@@ -1,0 +1,11 @@
+language: python
+python:
+  - 3.8
+install:
+  - pip install pylint
+  - pip install .
+script:
+  - pylint --fail-under=8.90 labdevices
+
+
+

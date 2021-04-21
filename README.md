@@ -1,64 +1,60 @@
 # labdevices
 
-The goal of this python package is to provide simple software drivers for the use of typical devices found in atomic physics research labs.
+[![Continuous integration](https://img.shields.io/travis/jkrauth/labdevices)](https://travis-ci.org/github/jkrauth/labdevices) [![MIT licensed](https://img.shields.io/github/license/jkrauth/labdevices)](https://github.com/jkrauth/labdevices/blob/main/LICENSE.md) [![MIT licensed](https://img.shields.io/pypi/v/labdevices)](https://pypi.org/project/labdevices/)
 
-This package is in an early stage. Every contribution to improve and extend it is welcome.
+SDK for devices used in our atomic physics research lab. Since there is probably more of those devices used in other labs as well, this package might be of a more general use.
 
-## Included Devices are from
+## Included devices
 
-- **Allied Vision**: Manta cameras
-- **Applied Motion Products**: Stepper Motor controller STF03D
-- **ANDO**: Spectrum Analyzer AQ-6315A/B
-- **Keysight**: Oscilloscope 3000T X-Series
-- **Newport**: Positioner Controller SMC100
-- **Pfeiffer Vacuum**: Gauge TPG362
-- **Rohde & Schwarz**: Spectrum Analyzer FPC1000, Oscilloscope ?
-- **Stanford Research Systems**: Delay Generator DG645
-- **Thorlabs**: Temperature Sensor TSP01
+The given links guide you to the programmer manuals of the included devices.
+
+| Company                   | Model                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| ANDO                      | [AQ-6315A/B](https://cdn.tmi.yokogawa.com/ASS-62408E-01Y_010.pd.pdf) spectrum analyzer |
+| Allied Vision             | [GigE](https://cdn.alliedvision.com/fileadmin/content/documents/products/cameras/various/features/Camera_and_Driver_Attributes.pdf) cameras |
+| Applied Motion Products   | [STF03D](https://appliedmotion.s3.amazonaws.com/Host-Command-Reference_920-0002V.pdf) stepper motor controller |
+| Keysight                  | [3000T X-Series](http://literature.cdn.keysight.com/litweb/pdf/75037-97025.pdf) oscilloscope |
+|                           | [53220A/53230A](53220A/53230A ) counter                      |
+| Kuhne Electronic          | [MKU LO 8-13 PLL](https://shop.kuhne-electronic.com/kuhne/en/shop/amateur-radio/signal-sources/oscillators/MKU+LO+813+PLL++Oscillator/?card=1714#_tab_content6) local oscillator  |
+| Newport                   | [SMC100](https://www.newport.com/medias/sys_master/images/images/h8d/h3a/8797263101982/SMC100CC-SMC100PP-User-Manual.pdf) positioner controller |
+| Pfeiffer Vacuum           | [TPG362](https://www.ajvs.com/library/Pfeiffer_Vacuum_TPG_361_TPG_362_Manual.pdf) vacuum gauge |
+| Rohde & Schwarz           | [FPC1000](https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/pdm/cl_manuals/user_manual/1178_4130_01/FPC_UserManual_en_09.pdf) spectrum analyzer |
+|                           | [RTB2000](https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/pdm/cl_manuals/user_manual/1333_1611_01/RTB_UserManual_en_10.pdf) oscilloscope |
+| Stanford Research Systems | [DG645](https://www.thinksrs.com/downloads/pdfs/manuals/DG645m.pdf) delay generator |
+| Thorlabs                  | [TSP01](https://www.thorlabs.com/drawings/d3a8b683b1da6c0e-C643E761-F31E-E669-C6BC10DCC87ABBE3/TSP01-Manual.pdf) temperature sensor |
+
+## Third party dependencies
+
+Most dependencies are installed automatically. For some devices, however, there are exceptions that need to be installed manually:
+
+- ANDO spectrometer: [prologix-gpib-ethernet](https://github.com/nelsond/prologix-gpib-ethernet)
+- Allied Vision GigE cameras: [Vimba SDK](https://www.alliedvision.com/en/products/software.html#agb-modal-content-5496)
 
 ## Installation
 
-It is recommended to work in a new virtual environment when installing this package.
-
-Create e.g. a conda virtual environment as
-
-```console
-conda create -n <name> python=3.6
-```
-
-where `<name>` is your environment name. The python version should be 3.6 or higher. Then activate the environment with
-
-```console
-conda activate <name>
-```
+It is recommended to install the package into a virtual environment.
 
 ### A) For development
 
 Clone the repository. From inside the package folder run
 
 ```console
-python setup.py develop
+pip install -e .
 ```
 
- Changes in the code of the labdevices package will automatically be available when loading the package in a restarted python console.
+ Changes in the code will then be reflected when reimporting the labdevices package. No new installation necessary.
+
+There is also a Jupyter Notebook provided that contains some use examples and is handy for development.
 
 ### B) For general use
 
-With the activated conda environment run
-
 ```console
-pip install https://github.com/jkrauth/labdevices.git
-```
-
-If there have been updates in the repo you then can upgrade the installation with:
-
-```console
-pip install --upgrade https://github.com/jkrauth/labdevices.git
+pip install labdevices
 ```
 
 ## Usage
 
-Once the labdevices package is installed into a conda environment you can simply do e.g.
+Once the labdevices package is installed, for example simply do
 
 ```python
 from labdevices.thorlabs import TSP01
@@ -67,43 +63,16 @@ from labdevices.thorlabs import TSP01
 For each device there should be a dummy device available in order to test software, when there is actually no device connected. For the switching to a dummy device simply import
 
 ```python
-from labdevices.thorlabs import TSP01DUMMY
+from labdevices.thorlabs import TSP01Dummy
 ```
 
-with DUMMY added to the device's class name.
-
-## Contributing
-
-Add new drivers or improve existing ones.
-
-Quick step guideline:
-
-1. Fork the project
-
-2. Create your feature branch
-
-3. Commit changes
-
-4. Push to the branch
-
-5. Open a pull request
-
-Add a new class in a file that carries the name of its company. If any non-standard packages are required, add them to the list in the setup.py file.
-
-New drivers should be tested before the changes are merged into the master branch. Same applies for modifications to already existing modules: Test them before you push.
-
-Please keep in mind to:
-
-- stick to the [naming convention](https://visualgit.readthedocs.io/en/latest/pages/naming_convention.html).
-- use docstrings whenever useful, according to [PEP257](https://www.python.org/dev/peps/pep-0257/).
-- for new modules always add a module header with name, author, date.
-- not include paths for saving files, VISA addresses of specific devices, etc., that should be part of your local application.
+with *Dummy* added to the device's class name.
 
 ## Troubleshooting
 
 ### Ubuntu
 
-If you want to read a VISA address with the pyvisa package and you get the following message
+If you want to read a VISA address with the pyvisa package and you get a message of the following type
 
 > Found a device whose serial number cannot be read. The partial VISA resource name is: USB0::2733::443::???::2::INSTR
 
@@ -139,4 +108,3 @@ If an Ethernet device is not recognized, check its settings. Usually a fixed IP 
 
 - Repo owner:  Julian Krauth, j.krauth@vu.nl
 - Institution: Vrije Universiteit Amsterdam, Faculty of Sciences, The Netherlands
-- MIT License, see file `LICENSE.md`

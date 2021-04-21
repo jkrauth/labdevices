@@ -23,192 +23,221 @@ Python Version: 3.7
 import numpy as np
 import pymba
 
+def get_available_cameras() -> list:
+    """ Find and show the cameras connected to the network. """
+    vimba = pymba.Vimba()
+    vimba.startup()
+    devices = vimba.camera_ids()
+    return devices
+
 class Manta:
     """
     Driver class for the GigE Allied Vision Manta Cameras.
     """
-
-    camera = None
-
-    def __init__(self, camera_id: str):
+    def __init__(self, device_id: str):
         """
         Arguments:
         camera_id -- str, usually in a format like 'DEV_000F314E1E59'
         """
         # Start the camera package
         self.vimba = pymba.Vimba()
-        self.vimba.startup()
 
-        # Find cameras
-        camera_ids = self.vimba.camera_ids()
-        print ("Available cameras : %s" % (camera_ids))
         # Find correct camera index
-        self.camera_id = camera_id
-        for index, identity in enumerate(camera_ids):
-            if self.camera_id == identity:
-                self.camera_index = index
-                break
+        self.device_id = device_id
 
-    def initialize(self):
+        # This will become the camera.
+        self._device = None
+
+    def initialize(self) -> None:
         """Establish connection to camera"""
-        self.camera = self.vimba.camera(self.camera_index)
-        self.camera.open()
-        print(f"Connected to camera : {self.camera_id}")
-
+        self.vimba.startup()
+        devices = self.vimba.camera_ids()
+        for index, identity in enumerate(devices):
+            if self.device_id == identity:
+                device_index = index
+                self._device = self.vimba.camera(device_index)
+                self._device.open()
+                print(f"Connected to camera : {self.idn}")
+                return
+        print('Camera not found.')
+        self.vimba.shutdown()
 
     def close(self):
         """Close connection to camera"""
-        if self.camera is not None:
-            self.camera.close()
+        if self._device is not None:
+            self._device.close()
             self.vimba.shutdown()
+            self._device = None
+
+    @property
+    def idn(self) -> str:
+        """ Return the device ID """
+        return self.device_id
 
     @property
     def model_name(self) -> str:
-        name = self.camera.DeviceModelName
+        name = self._device.DeviceModelName
         return name
 
     @property
     def packet_size(self) -> int:
-        return self.camera.GVSPPacketSize
+        return self._device.GVSPPacketSize
 
     @packet_size.setter
     def packet_size(self, value:int):
-        self.camera.GVSPPacketSize=value
+        self._device.GVSPPacketSize=value
 
     @property
-    def exposure(self) -> int:
-        """Exposure in microseconds"""
-        expos = self.camera.ExposureTimeAbs
+    def exposure(self) -> float:
+        """
+        Returns:
+        exposure -- float, in seconds
+        """
+        expos = float(self._device.ExposureTimeAbs)
         return expos*1e-6
 
     @exposure.setter
-    def exposure(self, expos: int):
-        self.camera.ExposureTimeAbs = expos*1e6
+    def exposure(self, expos: float):
+        """Sets exposure time of the camera
+        Argument:
+        exposure -- int, in seconds
+        """
+        # Convert to microseconds and set value
+        self._device.ExposureTimeAbs = int(expos*1e6)
 
     @property
     def gain(self):
         # Best image quality is achieved with gain = 0
-        gain = self.camera.Gain
+        gain = self._device.Gain
         return gain
 
     @gain.setter
     def gain(self,gain):
-        self.camera.Gain = gain
+        self._device.Gain = gain
 
     @property
     def roi_x(self) -> int:
-        return self.camera.OffsetX
+        return self._device.OffsetX
 
     @roi_x.setter
     def roi_x(self, val: int):
-        self.camera.OffsetX = val
+        self._device.OffsetX = val
 
     @property
     def roi_y(self) -> int:
-        return self.camera.OffsetY
+        return self._device.OffsetY
 
     @roi_y.setter
     def roi_y(self, val: int):
-        self.camera.OffsetY = val
+        self._device.OffsetY = val
 
     @property
     def roi_dx(self) -> int:
-        return self.camera.Width
+        return self._device.Width
 
     @roi_dx.setter
     def roi_dx(self, val: int):
-        self.camera.Width = val
+        self._device.Width = val
 
     @property
     def roi_dy(self) -> int:
-        return self.camera.Height
+        return self._device.Height
 
     @roi_dy.setter
     def roi_dy(self, val: int):
-        self.camera.Height = val
+        self._device.Height = val
 
     @property
     def sensor_size(self):
         """Returns number of pixels in width and height of the sensor"""
-        width = self.camera.SensorWidth
-        height = self.camera.SensorHeight
+        width = self._device.SensorWidth
+        height = self._device.SensorHeight
         return width, height
 
     @property
     def acquisition_mode(self):
-        return self.camera.AcquisitionMode
+        return self._device.AcquisitionMode
 
     @acquisition_mode.setter
     def acquisition_mode(self, mode):
         options = {'SingleFrame', 'Continuous'}
         if mode in options:
-            self.camera.arm(mode)
+            self._device.arm(mode)
         else:
             raise Exception(f"Value '{mode}' for acquisition mode is not valied")
 
-    def take_single_img(self):
+    def take_single_img(self) -> np.ndarray:
         """
         Sets everything to create a single image, takes the image
         and returns it.
         The argument adapts the method for the pixel format set in
         the camera. See pixFormat method.
         """
-        self.camera.arm('SingleFrame')
-        frame = self.camera.acquire_frame()
+        self._device.arm('SingleFrame')
+        frame = self._device.acquire_frame()
         image = frame.buffer_data_numpy().copy()
-        self.camera.disarm()
+        self._device.disarm()
         return image
 
-
-    def trig_mode(self, mode=None):
+    @property
+    def trig_mode(self) -> int:
         """Toggle Trigger Mode set by 1/0, respectively.
-        Keyword Arguments:
-            mode {int} -- possible values: 0, 1
         Returns:
             int -- 0 or 1, depending on trigger mode off or on
         """
-        if mode is None:
-            onoff = {'Off': 0, 'On': 1}
-            mode = self.camera.TriggerMode
-            return onoff[mode]
-        else:
-            onoff = ['Off', 'On']
-            self.camera.TriggerMode = onoff[mode]
+        onoff = {'Off': 0, 'On': 1}
+        mode = self._device.TriggerMode
+        return onoff[mode]
 
-    def trig_source(self, source=None):
+    @trig_mode.setter
+    def trig_mode(self, mode: int):
+        """Toggle Trigger Mode set by 1/0, respectively.
+        Keyword Arguments:
+            mode -- possible values: 0, 1
+        """
+        onoff = ['Off', 'On']
+        self._device.TriggerMode = onoff[mode]
+
+    @property
+    def trig_source(self) -> str:
         """Get/Select trigger source keyword arguments:
-            source {str} -- Source can be one of the following strings:
-                            'Freerun', 'Line1', 'Line2', 'FixedRate', 'Software'
         Returns:
             str -- trigger source
         """
-        if source is None:
-            source = self.camera.TriggerSource
-            return source
-        else:
-            self.camera.TriggerSource = source
+        return self._device.TriggerSource
 
+    @trig_source.setter
+    def trig_source(self, source: str):
+        """Get/Select trigger source keyword arguments:
+            source {str} -- Source can be one of the following strings:
+                            'Freerun', 'Line1', 'Line2', 'FixedRate', 'Software'
+        """
+        self._device.TriggerSource = source
 
-    def pix_format(self, pix=None):
+    @property
+    def pix_format(self) -> str:
+        """Get/Select pixel format
+        Returns:
+            str -- Pixelformat
+        """
+        return self._device.PixelFormat
+
+    @pix_format.setter
+    def pix_format(self, pix: str):
         """Get/Select pixel format
         Keyword Arguments:
             pix {str} -- possible values: 'Mono8','Mono12','Mono12Packed'
                          (default: {None})
-        Returns:
-            str -- Pixelformat
         """
-        if pix is None:
-            pix = self.camera.PixelFormat
-            return pix
-        else:
-            self.camera.PixelFormat = pix
+        self._device.PixelFormat = pix
 
 
 class MantaDummy:
     """Manta class for testing. It doesn't need any device connected."""
-    camera = None
 
-    def __init__(self, camera_id=1):
+    def __init__(self, device_id: str):
+        self.idn = "Dummy " + device_id
+        self._device = None
         self.height = 1216
         self.width = 1936
         self.exposure = 20
@@ -217,33 +246,21 @@ class MantaDummy:
         self.roi_y = 0
         self.roi_dx = 100
         self.roi_dy = 100
-        self.source = 'External'
-        self.format = 'Mono8'
+        self.trig_source = 'External'
+        self.pix_format = 'Mono8'
 
     def initialize(self):
-        self.camera = 1
+        self._device = 1
         print('Connected to camera dummy!')
 
     def close(self):
-        if self.camera is not None:
+        if self._device is not None:
             pass
         else:
             print('Camera dummy closed!')
 
-    def trig_source(self, val=None):
-        if val is None:
-            return self.source
-        else:
-            self.source = val
-
-    def pix_format(self, val=None):
-        if val is None:
-            return self.format
-        else:
-            self.format = val
-
     def take_single_img(self):
-        return np.random.rand(self.height, self.width)
+        return 255*np.random.rand(self.height, self.width)
 
     @property
     def sensor_size(self):
