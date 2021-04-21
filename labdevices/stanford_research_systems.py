@@ -56,7 +56,6 @@ class DG645:
         self._device.settimeout(self.timeout)
         self._device.connect((self.tcp, self.port))
         time.sleep(0.2)
-        print('bla')
         print(f'Connected to:\n    {self.idn}')
 
     def close(self):
@@ -139,7 +138,10 @@ class DG645Dummy(DG645):
     """For testing purpose only. No device needed."""
     def __init__(self, tcp: str, port: int, timeout: float = 0.010):
         super().__init__(tcp, port)
-        self.idn = 'Dummy DG645'
+
+    @property
+    def idn(self) -> str:
+        return 'Dummy DG645'
 
     def initialize(self):
         pass
