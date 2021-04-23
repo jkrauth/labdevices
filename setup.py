@@ -33,7 +33,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Intended Audience :: Science/Research",
     ],
-    packages=find_packages(),
+    packages=find_packages(include=['labdevices']),
     python_requires='>=3.6',
     install_requires=requirements,
 )
