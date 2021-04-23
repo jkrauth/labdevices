@@ -8,9 +8,12 @@ from labdevices import keysight, kuhne_electronic, newport
 
 class DeviceMeta(type):
     """ A device meta class """
+
+    @classmethod
     def __instancecheck__(cls, instance: Any) -> bool:
         return cls.__subclasscheck__(type(instance))
 
+    @classmethod
     def __subclasscheck__(cls, subclass: type) -> bool:
         return (
             # hasattr(subclass, '_device') and
@@ -25,12 +28,13 @@ class DeviceMeta(type):
             hasattr(subclass, 'idn')
         )
 
+
 class Device(metaclass=DeviceMeta):
     """ Device interface built from DeviceMeta metaclass. """
-    pass
 
-class KeysightTest(unittest.TestCase):
 
+class KeysightInterfaceTest(unittest.TestCase):
+    """ For testing the interface of Keysight devices. """
     def setUp(self):
         addr = "1.1.1.1"
         self.oscilloscope = keysight.Oscilloscope(addr)
@@ -44,21 +48,23 @@ class KeysightTest(unittest.TestCase):
     def test_counter_interface(self):
         self.assertIsInstance(self.counter, Device)
 
-class KuhneElectronicTest(unittest.TestCase):
-
+class KuhneElectronicInterfaceTest(unittest.TestCase):
+    """ For testing the interface of Kuhne Electronic devices. """
     def setUp(self) -> None:
         self.local_oscillator = kuhne_electronic.LocalOscillator('')
 
     def test_local_oscillator_interface(self):
         self.assertIsInstance(self.local_oscillator, Device)
+        self.assertTrue(hasattr(self.local_oscillator, '_device'))
 
-class NewportTest(unittest.TestCase):
-
+class NewportInterfaceTest(unittest.TestCase):
+    """ For testing the interface of Newport devices. """
     def setUp(self):
         self.smc100 = newport.SMC100('')
 
     def test_smc100_interface(self):
         self.assertIsInstance(self.smc100, Device)
+        self.assertTrue(hasattr(self.smc100, '_device'))
 
 if __name__ == "__main__":
     unittest.main()
