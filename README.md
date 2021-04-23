@@ -68,6 +68,41 @@ from labdevices.thorlabs import TSP01Dummy
 
 with *Dummy* added to the device's class name.
 
+## Testing
+
+There is two kinds of tests implemented:
+
+### Interface tests
+
+Run by 
+
+```console
+python -m unittest test.test_interface
+```
+
+This checks that all devices have the basic methods implemented that a device needs, like e.g. initialize() and close()
+
+### Unit tests
+
+Run by e.g.
+
+```console
+python -m unittest test.test_keysight.CounterTest
+python -m unittest test.test_keysight.CounterDummyTest
+```
+
+These tests should exist for each device and can only run if the device is actually connected to the system.
+
+The idea of those tests is to check that all the methods work, that the return format is correct, and that the dummy devices support all functionality.
+
+In order to run a test across all the dummy classes use:
+
+```console
+python -m unittest test -k DummyTest
+```
+
+
+
 ## Troubleshooting
 
 ### Ubuntu
