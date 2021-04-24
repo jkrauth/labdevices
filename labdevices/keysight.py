@@ -12,7 +12,7 @@ import re
 import pyvisa as visa
 import numpy as np
 
-from labdevices._mock.keysight import PyvisaDummy
+from ._mock.keysight import PyvisaDummy
 
 PREAMBLE_TYPES = (int, int, int, int, float, float, int, float, float, int)
 
