@@ -204,14 +204,14 @@ class Oscilloscope(RSDevice):
         parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
         return Preamble(*parameters)
 
-    def get_screen_shot(self) -> bytes:
+    def get_screenshot(self) -> bytes:
         """Get an image of the oscilloscope display. The return can be
         simply written to a file. Don't forget the binary mode then.
         Returns:
         png image -- bytes
         """
         # self.write('HCOPy:CWINdow ON') this closes all windows
-        # when taking screen shot so signal can be seen.
+        # when taking screenshot so signal can be seen.
         # set format
         self.write('HCOPy:LANG PNG')
         image_bytes = self.ieee_query('HCOPy:DATA?')
