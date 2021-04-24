@@ -34,6 +34,7 @@ setup(
         "Intended Audience :: Science/Research",
     ],
     packages=find_packages(include=['labdevices']),
+    include_package_data=True,
     python_requires='>=3.6',
     install_requires=requirements,
 )
