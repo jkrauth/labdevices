@@ -14,6 +14,7 @@ import pyvisa
 
 class Preamble(NamedTuple):
     """ The data structure containing the axis information of the waveform """
+    # Do not change the order of these lines! (the get_preamble method relies on it.)
     x_start: float          # in sec
     x_stop: float           # in sec
     points: int             # waveform length in samples

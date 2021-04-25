@@ -17,6 +17,7 @@ from ._mock.keysight import PyvisaDummy
 class Preamble(NamedTuple):
     """ The data structure of the preamble of a waveform.
     Contains all the trace settings. Used in Oscilloscope class. """
+    # Do not change the order of these lines! (the get_preamble method relies on it.)
     data_format: int    # 0 = BYTE, 1 = WORD, 4 = ASCII
     data_type: int      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
     points: int         # number of data points transferred
