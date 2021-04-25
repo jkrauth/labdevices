@@ -7,28 +7,26 @@ Date created: 2020/11/11
 Python Version: 3.7
 
 """
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Tuple, get_type_hints
 import re
 import pyvisa as visa
 import numpy as np
 
 from ._mock.keysight import PyvisaDummy
 
-PREAMBLE_TYPES = (int, int, int, int, float, float, int, float, float, int)
-
 class Preamble(NamedTuple):
     """ The data structure of the preamble of a waveform.
     Contains all the trace settings. Used in Oscilloscope class. """
-    data_format: PREAMBLE_TYPES[0]    # 0 = BYTE, 1 = WORD, 4 = ASCII
-    data_type: PREAMBLE_TYPES[1]      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
-    points: PREAMBLE_TYPES[2]         # number of data points transferred
-    count: PREAMBLE_TYPES[3]          # 1 and is always 1
-    x_increment: PREAMBLE_TYPES[4]    # time difference between data points.
-    x_origin: PREAMBLE_TYPES[5]       # always the first data point in memory
-    x_reference: PREAMBLE_TYPES[6]    # specifies the data point associated with x-origin
-    y_increment: PREAMBLE_TYPES[7]    # voltage diff between data points
-    y_origin: PREAMBLE_TYPES[8]       # value is the voltage at center screen
-    y_reference: PREAMBLE_TYPES[9]    # specifies the data point where y-origin occurs
+    data_format: int    # 0 = BYTE, 1 = WORD, 4 = ASCII
+    data_type: int      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
+    points: int         # number of data points transferred
+    count: int          # 1 and is always 1
+    x_increment: float  # time difference between data points.
+    x_origin: float     # always the first data point in memory
+    x_reference: int    # specifies the data point associated with x-origin
+    y_increment: float  # voltage diff between data points
+    y_origin: float     # value is the voltage at center screen
+    y_reference: int    # specifies the data point where y-origin occurs
 
 
 class KeysightDevice:
@@ -286,8 +284,12 @@ class Oscilloscope(KeysightDevice):
         """
         # Set source for waveform commands
         self.write(f':WAVeform:SOURce {channel}')
+
         respons = self.query(":WAVeform:PREamble?").split(',')
-        parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
+
+        # Convert strings into correct types
+        preamble_types = list(get_type_hints(Preamble).values())
+        parameters = list(map(lambda x, y: x(y), preamble_types, respons))
         return Preamble(*parameters)
 
 class OscilloscopeDummy(Oscilloscope):

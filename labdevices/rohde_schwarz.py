@@ -8,18 +8,16 @@ Python Version: 3.7
 
 """
 import re
-from typing import NamedTuple
+from typing import NamedTuple, get_type_hints
 import numpy as np
 import pyvisa
 
-PREAMBLE_TYPES = (float, float, int, int)
-
 class Preamble(NamedTuple):
     """ The data structure containing the axis information of the waveform """
-    x_start: PREAMBLE_TYPES[0]              # in sec
-    x_stop: PREAMBLE_TYPES[1]               # in sec
-    points: PREAMBLE_TYPES[2]               # waveform length in samples
-    values_per_sample: PREAMBLE_TYPES[3]    # usually 1
+    x_start: float          # in sec
+    x_stop: float           # in sec
+    points: int             # waveform length in samples
+    values_per_sample: int  # usually 1
 
 
 class RSDevice:
@@ -201,7 +199,8 @@ class Oscilloscope(RSDevice):
         Returns:
         preamble -- Preamble"""
         respons = self.query(f'CHANnel{channel}:DATA:HEADer?').split(',')
-        parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
+        preamble_types = list(get_type_hints(Preamble).values())
+        parameters = map(lambda x, y: x(y), preamble_types, respons)
         return Preamble(*parameters)
 
     def get_screenshot(self) -> bytes:
