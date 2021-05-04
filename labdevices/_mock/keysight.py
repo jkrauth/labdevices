@@ -44,11 +44,11 @@ class PyvisaDummy(Mock):
         with a corresponding binary value.
         """
         if command == ":DISPlay:DATA? PNG, COLor":
-            file_dir = pathlib.Path(__file__).parent / 'screenshot.png'
+            file_dir = pathlib.Path(__file__).parent / 'keysight_oscilloscope_screenshot.png'
             with open(file_dir, "rb") as f:
                 return [f.read()]
         if command == ":WAVeform:DATA?":
-            file_dir = pathlib.Path(__file__).parent / 'waveform_data_binary'
+            file_dir = pathlib.Path(__file__).parent / 'keysight_oscilloscope_trace_bin'
             with open(file_dir, "rb") as f:
                 return [f.read()]
         return [Mock()]
