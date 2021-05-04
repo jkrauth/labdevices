@@ -15,21 +15,16 @@ QUERY_COMMANDS = {
     "FREQ:STOP?":           "281000000.000000\n",
     # Oscilloscope commands
     "MEASurement:RESult?": "0.1",
-    ":WAVeform:PREamble?":  (
-        "+0,+0,+64516,+1,+1.55000309E-005,-5.00000000E-001,"
-        "+0,+1.60804000E-004,+0.0E+000,+128"
-        ),
-
 }
 
 class PyvisaDummy(Mock):
     """ Mock class for the pyvisa package when using the
-    Keysight devices as dummy. """
+    Rohde & Schwarz devices as dummy. """
 
     @staticmethod
     def query(command: str):
         """
-        Containes all the query commands used in the keysight
+        Containes all the query commands used in the Rohde & Schwarz
         drivers and returns a result with the pattern of the
         actual device.
         """
