@@ -2,6 +2,8 @@
 from unittest.mock import Mock
 import pathlib
 
+DATA_DIR = pathlib.Path(__file__).parent / 'data'
+
 # The commands that are used in the methods of the keysight
 # devices and typical responses.
 QUERY_COMMANDS = {
@@ -44,11 +46,11 @@ class PyvisaDummy(Mock):
         with a corresponding binary value.
         """
         if command == ":DISPlay:DATA? PNG, COLor":
-            file_dir = pathlib.Path(__file__).parent / 'keysight_oscilloscope_screenshot.png'
+            file_dir = DATA_DIR / 'keysight_oscilloscope_screenshot.png'
             with open(file_dir, "rb") as f:
                 return [f.read()]
         if command == ":WAVeform:DATA?":
-            file_dir = pathlib.Path(__file__).parent / 'keysight_oscilloscope_trace_bin'
+            file_dir = DATA_DIR / 'keysight_oscilloscope_trace_bin'
             with open(file_dir, "rb") as f:
                 return [f.read()]
         return [Mock()]

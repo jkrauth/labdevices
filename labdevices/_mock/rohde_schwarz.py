@@ -2,6 +2,8 @@
 from unittest.mock import Mock
 import pathlib
 
+DATA_DIR = pathlib.Path(__file__).parent / 'data'
+
 # The commands that are used in the methods of the Rohde & Schwarz
 # devices and typical responses.
 QUERY_COMMANDS = {
@@ -34,11 +36,11 @@ class PyvisaDummy(Mock):
         if command in QUERY_COMMANDS:
             return QUERY_COMMANDS[command]
         if command == "TRACe:DATA? TRACE1":
-            file_dir = pathlib.Path(__file__).parent / 'rohde_schwarz_spectrum_analyzer_trace.txt'
+            file_dir = DATA_DIR / 'rohde_schwarz_spectrum_analyzer_trace.txt'
             with open(file_dir, "r") as f:
                 return f.read()
         if "FORMat ASC; CHANnel" in command:
-            file_dir = pathlib.Path(__file__).parent / 'rohde_schwarz_oscilloscope_trace.txt'
+            file_dir = DATA_DIR / 'rohde_schwarz_oscilloscope_trace.txt'
             with open(file_dir, "r") as f:
                 return f.read()
         if ":DATA:HEADer?" in command:
@@ -53,7 +55,7 @@ class PyvisaDummy(Mock):
         with a corresponding binary value.
         """
         if command == "HCOPy:DATA?":
-            file_dir = pathlib.Path(__file__).parent / 'rohde_schwarz_oscilloscope_screenshot.png'
+            file_dir = DATA_DIR / 'rohde_schwarz_oscilloscope_screenshot.png'
             with open(file_dir, "rb") as f:
                 return [f.read()]
         return [Mock()]
