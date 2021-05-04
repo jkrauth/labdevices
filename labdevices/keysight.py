@@ -163,6 +163,7 @@ class CounterDummy(Counter):
     Provides a class that immitates a real counter and can be
     used for development.
     """
+
     def initialize(self):
         """Establish connection to mock device."""
         self._device = PyvisaDummy()
