@@ -86,6 +86,7 @@ class DG645:
 
     @property
     def idn(self) -> str:
+        """ Get identification of device. """
         idn = self.query('*IDN?')
         return idn
 

@@ -19,14 +19,14 @@ QUERY_COMMANDS = {
 
 }
 
-
 class PLXDummy(Mock):
     """
     Mock class for the plx_gpib_ethernet package when using the
     ANDO devices as dummy.
     """
 
-    def query(self, command: str):
+    @staticmethod
+    def query(command: str):
         """
         Containes all the query commands used in the ANDO Spectrometer
         and returns a valid string.
@@ -41,3 +41,4 @@ class PLXDummy(Mock):
             return '  20, 400.000, 401.300, 402.600, 403.900, 405.200, 406.500, 407.800,'\
                 ' 409.100, 410.400, 411.700, 413.000, 414.300, 415.600, 416.900, 418.200,'\
                 ' 419.500, 420.800, 422.100, 423.400, 424.700\r\n'
+        return Mock()
