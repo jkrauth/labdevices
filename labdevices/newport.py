@@ -10,8 +10,10 @@ Date created: 2019/05/22
 Python Version: 3.7
 """
 from time import sleep
+from typing import Tuple
 import pyvisa as visa
 
+from ._mock.newport import PyvisaDummy
 
 CTRL_STATUS = {
     'configuration':      0x14,
@@ -55,13 +57,12 @@ class SMC100:
         'write_termination':    '\r\n',
         'read_termination':     '\r\n',
         'encoding':             'ascii',
-        'baudrate':             921600,
+        'baud_rate':             921600,
         'timeout':              100,
         'parity':               visa.constants.Parity.none,
         'data_bits':            8,
         'stop_bits':            visa.constants.StopBits.one,
         'flow_control':         visa.constants.VI_ASRL_FLOW_XON_XOFF,
-        'query_termination':    '?',
     }
 
 
@@ -86,12 +87,12 @@ class SMC100:
             timeout=self.defaults['timeout'],
             encoding=self.defaults['encoding'],
             parity=self.defaults['parity'],
-            baud_rate=self.defaults['baudrate'],
+            baud_rate=self.defaults['baud_rate'],
             data_bits=self.defaults['data_bits'],
             stop_bits=self.defaults['stop_bits'],
             flow_control=self.defaults['flow_control'],
             write_termination=self.defaults['write_termination'],
-            read_termination=self.defaults['read_termination']
+            read_termination=self.defaults['read_termination'],
         )
 
         # make sure connection is established before doing anything else
@@ -103,13 +104,14 @@ class SMC100:
         #print("Connected to Newport stage: %s".format(self.idn))
 
     def write(self, cmd: str):
+        """ Add device number to command and send to device. """
         cmd = f"{self.dev_number}{cmd}"
         self._device.write(cmd)
 
     def query(self, cmd: str) -> str:
+        """ Query device. """
         # Add device number to command
         cmd_complete = f"{self.dev_number}{cmd}"
-
         respons = self._device.query(cmd_complete)
         # respons is build the following way:
         # dev_number+cmd_return+answer | cmd_return never contains the question mark
@@ -127,14 +129,18 @@ class SMC100:
         print('Newport device is already closed')
 
     @property
-    def idn(self):
-        idn = self.query("ID{}".format(self.defaults['query_termination']))
+    def idn(self) -> str:
+        """ Ask for identity. """
+        idn = self.query("ID?")
         return idn
 
     @property
     def is_moving(self) -> bool:
+        """ Check if device is moving. """
         moving = CTRL_STATUS['moving']
-        return self.error_and_controller_status()[1] == moving
+         # get controller status and convert hex string to int
+        ctrl_status = int(self.error_and_controller_status()[1], 16)
+        return ctrl_status == moving
 
     def wait_move_finish(self, interval: float):
         """
@@ -144,16 +150,17 @@ class SMC100:
             sleep(interval)
         print("Movement finished")
 
-    def error_and_controller_status(self):
+    def error_and_controller_status(self) -> Tuple[str, str]:
         """Returns positioner errors and controller status
+        in hex.
         This method also clears the error buffer.
         """
         respons = self.query('TS')
         positioner_errors = respons[0:4]
-        controller_state = int(respons[4:6],16) # conv hex string to int
+        controller_state = respons[4:6]
         return positioner_errors, controller_state
 
-    def get_last_command_error(self):
+    def get_last_command_error(self) -> str:
         """When a command is not executable, an error will be memorized.
         This error can be read with this command.
         The error buffer then gets erased.
@@ -161,7 +168,6 @@ class SMC100:
         """
         respons = self.query('TE')
         return respons
-
 
     def move_rel(self, distance: float):
         """Move stage to new relative position.
@@ -178,12 +184,13 @@ class SMC100:
         self.write(f'PA{position}')
 
     @property
-    def position(self):
+    def position(self) -> float:
         """Get current position of stage."""
-        pos = self.query(f"PA{self.defaults['query_termination']}")
-        return pos
+        pos = self.query("PA?")
+        return float(pos)
 
     def home(self):
+        """ Move device to home position. """
         self.write('OR')
 
     def reset(self):
@@ -193,62 +200,33 @@ class SMC100:
         self.write('RS')
 
     @property
-    def speed(self):
-        speed = self.query(f"VA{self.defaults['query_termination']}")
-        return speed
+    def speed(self) -> float:
+        """ Constant moving speed of the device. """
+        speed = self.query("VA?")
+        return float(speed)
 
     @speed.setter
     def speed(self, value: float):
         self.write(f'VA{value}')
 
     @property
-    def acceleration(self):
-        accel = self.query(f"AC{self.defaults['query_termination']}")
-        return accel
+    def acceleration(self) -> float:
+        """ Acceleration and deceleration of the device. """
+        accel = self.query("AC?")
+        return float(accel)
 
     @acceleration.setter
     def acceleration(self, value: float):
         self.write(f'AC{value}')
 
-class SMC100Dummy:
+class SMC100Dummy(SMC100):
     """For testing purpose only"""
 
-    def __init__(self, port, dev_number):
-        self.port = port
-        self.dev_number = dev_number
-        self.idn = '123456'
-        self.pos = 0
-        self._device = None
+    def initialize(self) -> None:
+        """Connect to dummy device."""
+        self._device = PyvisaDummy()
 
-    def initialize(self):
-        self._device = 1
-        print(f"Connected to dummy Newport stage {self.dev_number}: {self.idn}")
-
-    def write(self, cmd):
-        pass
-
-    def query(self, cmd):
-        return 1
-
-    def move_rel(self, distance: float):
-        self.pos += distance
-
-    def move_abs(self, position: float):
-        self.pos = position
-
-    @property
-    def position(self):
-        return self.pos
-
-    def close(self):
-        if self._device is not None:
-            pass
-        else:
-            print('Newport device is already closed')
-
-    def wait_move_finish(self, interval):
-        sleep(interval)
-        print("Movement finished")
+        print(f"Connected to Newport stage {self.dev_number}: {self.idn}")
 
 
 if __name__ == "__main__":
