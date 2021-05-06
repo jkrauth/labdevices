@@ -13,6 +13,8 @@ Python Version: 3.7
 """
 import socket
 
+from labdevices._mock.applied_motion_products import SocketDummy
+
 # The ports for communication. We usually use UDP
 TCP_PORT = 7776
 UDP_PORT = 7775
@@ -86,7 +88,12 @@ STEPS_PER_TURN = {
 }
 
 class STF03D:
-    """Class for the STF03-D Stepper Motor Controllers."""
+    """
+    Class for the STF03-D Stepper Motor Controllers.
+
+    When using this class start to set the motor calibration with
+    self.set_calibration()
+    """
 
     _header = bytes([0x00, 0x007])
     _tail = bytes([0xD])
@@ -109,7 +116,27 @@ class STF03D:
         # This is the calibration and it has to be set by self.set_calibration()
         self._units_per_motor_turn = None
 
-    def _write(self, cmd: str):
+    def initialize(self) -> None:
+        """Establish connection to device."""
+        self._device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._device.bind((self.host_ip, self.host_port))
+        self._device.settimeout(self.timeout)
+        print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
+
+    def close(self) -> None:
+        """Close connection to device."""
+        if self._device is None:
+            print('Device is already closed.')
+            return
+        self._device.close()
+        print(f'Closed rotary feedthrough with IP={self.device_ip}.')
+
+    @property
+    def idn(self) -> str:
+        """ Returns model and revision """
+        return self.query('MV')
+
+    def write(self, cmd: str):
         """Send a message with the correct header and end characters"""
         to_send = self._header + cmd.encode() + self._tail
         self._device.sendto(to_send, (self.device_ip, UDP_PORT))
@@ -121,41 +148,31 @@ class STF03D:
         respons = respons_raw.decode()
         return respons[2:-1]
 
-    def _query(self, cmd: str) -> str:
-        self._write(cmd)
+    def query(self, cmd: str) -> str:
+        """ Query the device. """
+        self.write(cmd)
         return self._read()
 
-    def _move_settings(self, cmd: str, value: None) -> str:
-        """Base function for the set/get functionality
-        of the speed setting functions."""
-        if value is None:
-            respons = self._query(cmd)[3:]
-            return respons
-        cmd = cmd + str(value)
-        return self._query(cmd)
+    def _get_future_movement_value(self) -> float:
+        """Request the distance by which the motor moves with the next
+        relative move command, or the position to which the motor
+        moves with the next absolute move command.
+        """
+        steps = int(self.query('DI')[3:])
+        value = self._step_to_unit(steps)
+        return value
 
-    def _distance_or_position(self, value: float=None):
-        """Set or request the distance by which the motor moves after sending
-        a relative move command, or the position to which the motor
-        moves after sending an absolute move command.
+    def _set_future_movement_value(self, value: float) -> None:
+        """Set the distance by which the motor moves with the next
+        relative move command, or the position to which the motor
+        moves with the next absolute move command.
         value -- in units as defined by the calibration.
         """
-        if value is None:
-            steps = int(self._move_settings('DI', None))
-            value = self._step_to_unit(steps)
-            return value
         steps = self._unit_to_step(value)
         print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
-        return self._move_settings('DI', steps)
+        _ = self.query(f'DI{steps}')
 
-    def initialize(self):
-        """Establish connection to device."""
-        self._device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._device.bind((self.host_ip, self.host_port))
-        self._device.settimeout(self.timeout)
-        print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
-
-    def set_calibration(self, units_per_motor_turn: float):
+    def set_calibration(self, units_per_motor_turn: float) -> None:
         """
         Arguments:
         units_per_motor_turn -- units could be degree or meter.
@@ -166,22 +183,13 @@ class STF03D:
         """
         self._units_per_motor_turn = units_per_motor_turn
 
-    def close(self):
-        """Close connection to device."""
-        if self._device is None:
-            print('Device is already closed.')
-            return
-        self._device.close()
-        print(f'Closed rotary feedthrough with IP={self.device_ip}.')
-
-
     def get_alarm(self) -> list:
         """Reads back an equivalent hexadecimal value of the
         Alarm Code's 16-bit binary word and translates it into
         corresponding error messages.
         """
         # Strip off the 'AL=' prefix
-        respons = self._query('AL')[3:]
+        respons = self.query('AL')[3:]
         # Convert hex string to integer
         alarm = int(respons, 16)
         error_list = []
@@ -199,7 +207,7 @@ class STF03D:
         corresponding status messages.
         """
         # Strip off the 'SC=' prefix
-        respons = self._query('SC')[3:]
+        respons = self.query('SC')[3:]
         status = int(respons, 16)
         status_list = []
         if not status:
@@ -212,13 +220,13 @@ class STF03D:
 
     def is_moving(self) -> bool:
         """Ask for device movement status, return boolean."""
-        respons = self._query('SC')[3:]
+        respons = self.query('SC')[3:]
         status = int(respons, 16)
         return bool(0x0010 & status)
 
     def get_microstep(self) -> int:
         """Requests the microstep resolution of the drive."""
-        respons = self._move_settings('MR', None)
+        respons = self.query('MR')[3:]
         return int(respons)
 
     def set_microstep(self, value: int=3) -> None:
@@ -226,10 +234,10 @@ class STF03D:
         Argument:
         value -- between [0 and 15] (standard is 3)
         """
-        _ = self._move_settings('MR', value)
+        _ = self.query(f'MR{value}')
 
     @property
-    def conversion_factor(self) -> float:
+    def _conversion_factor(self) -> float:
         """This yields the steps/user-defined-unit ratio. The steps of the
         stepper motor depend on the microstep resolution setting.
         """
@@ -241,147 +249,191 @@ class STF03D:
 
     def _step_to_unit(self, step: int) -> float:
         """Convert stepper motor steps into user-defined units."""
-        return float(step) / self.conversion_factor
+        return float(step) / self._conversion_factor
 
     def _unit_to_step(self, value: float) -> int:
         """Convert value in user-defined units into
         steps of the stepper motor.
         Argument:
         value -- in user-defined units"""
-        return int(round(value * self.conversion_factor))
+        return int(round(value * self._conversion_factor))
 
-    def max_current(self, value: float=None):
-        """Set or request the maximum idle and change current limit.
-        value -- in Ampere, max is 3 A"""
-        return self._move_settings('MC', value)
+    @property
+    def max_current(self) -> float:
+        """
+        Set or request the maximum idle and change current limit.
+        value -- in Ampere, max is 3 A
+        """
+        return float(self.query('MC')[3:])
 
-    def idle_current(self, value: float=None):
-        """Set or request the current the standing still situation.
+    @max_current.setter
+    def max_current(self, value: float):
+        _ = self.query(f'MC{value}')
+
+    @property
+    def idle_current(self) -> float:
+        """
+        Set or request the current the standing still situation.
         A good value seems to be 0.5 A.
-        value -- in Ampere, max is given by self.max_current()."""
-        return self._move_settings('CI', value)
+        value -- in Ampere, max is given by self.max_current().
+        """
+        return float(self.query('CI')[3:])
 
-    def change_current(self, value: float=None):
+    @idle_current.setter
+    def idle_current(self, value: float):
+        _ = self.query(f'CI{value}')
+
+    @property
+    def change_current(self) -> float:
         """Set or request the current for moving the stepper motor.
         For not missing any steps that should be as high as possible,
         which in this case is 3 A.
         value -- in Ampere, max is given by self.max_current()."""
-        return self._move_settings('CC', value)
+        return float(self.query('CC')[3:])
+
+    @change_current.setter
+    def change_current(self, value: float):
+        _ = self.query(f'CC{value}')
 
     def get_position(self) -> float:
         """Returns the current position in user-defined units."""
-        steps = int(self._query('SP')[3:])
+        steps = int(self.query('SP')[3:])
         print(f'Position in steps is: {steps}')
         return self._step_to_unit(steps)
 
-    def reset_position(self):
+    def reset_position(self) -> None:
         """Set current motor position to the new zero position."""
-        _ = self._query('SP0')
+        _ = self.query('SP0')
 
     def get_immediate_position(self) -> int:
         """This returns the calculated trajectory position, which
         is not always equal to the actual position.
         Units are stepper motor steps.
         """
-        respons = self._query('IP')[3:]
-        print(respons)
+        respons = self.query('IP')[3:]
         position = int(respons, 16)
         return position
 
-    def acceleration(self, value: float=None):
+    @property
+    def acceleration(self) -> float:
         """Sets or requests the acceleration used
         in point-to-point move commands.
         Argument:
         value -- in rps/s (a standard value is 1)
         """
-        return self._move_settings('AC', value)
+        return float(self.query('AC')[3:])
 
-    def deceleration(self, value: float=None):
+    @acceleration.setter
+    def acceleration(self, value: float):
+        _ = self.query(f'AC{value}')
+
+    @property
+    def deceleration(self) -> float:
         """Sets or requests the deceleration used
         in point-to-point move commands
         Argument:
         value -- in rps/s (a standard value is 1)
         """
-        return self._move_settings('DE', value)
+        return float(self.query('DE')[3:])
 
-    def speed(self, value: float=None):
+    @deceleration.setter
+    def deceleration(self, value: float):
+        _ = self.query(f'DE{value}')
+
+    @property
+    def speed(self) -> float:
         """Sets or requests shaft speed for point-to-point
         move commands
         Argument:
         value -- in rps (a standard value is 2)
         """
-        return self._move_settings('VE', value)
+        return float(self.query('VE')[3:])
 
-    def move_relative(self, value: float):
+    @speed.setter
+    def speed(self, value: float):
+        _ = self.query(f'VE{value}')
+
+    def move_relative(self, value: float) -> None:
         """Relative rotation of the feedthrough
         Argument:
         value -- in user-defined units
         """
-        _ = self._distance_or_position(value)
-        _ = self._query('FL')
+        self._set_future_movement_value(value)
+        _ = self.query('FL')
 
-    def move_absolute(self, position: float):
+    def move_absolute(self, position: float) -> None:
         """Rotate the feedthrough to a given position
         Argument:
         position -- in degrees
         """
-        _ = self._distance_or_position(position)
-        _ = self._query('FP')
+        self._set_future_movement_value(position)
+        _ = self.query('FP')
 
 
-class STF03DDummy:
+class STF03DDummy(STF03D):
     """Class for testing. Does not actually connect to any device."""
-    def __init__(self, device_ip, host_ip=HOST_IP,
-        host_port=HOST_PORT, timeout=5):
-
-        self.device_ip = device_ip
-        self.host_ip = host_ip
-        self.host_port = host_port
-        self.timeout = timeout
-        # Dummy parameters
-        self.position = 0
-        self.accel = 1
-        self.decel = 1
-        self.velocity = 1
 
     def initialize(self):
-        pass
+        """Establish connection to device."""
+        self._device = SocketDummy()
+        self._device.bind((self.host_ip, self.host_port))
+        self._device.settimeout(self.timeout)
+        print(f'Connected to rotary feedthrough with IP={self.device_ip}.')
 
-    def close(self):
-        pass
 
-    def get_alarm_code(self):
-        return ['no alarms']
+# class STF03DDummy:
+#     """Class for testing. Does not actually connect to any device."""
+#     def __init__(self, device_ip, host_ip=HOST_IP,
+#         host_port=HOST_PORT, timeout=5):
 
-    def get_position(self):
-        return self.position
+#         self.device_ip = device_ip
+#         self.host_ip = host_ip
+#         self.host_port = host_port
+#         self.timeout = timeout
+#         # Dummy parameters
+#         self.position = 0
+#         self.accel = 1
+#         self.decel = 1
+#         self.velocity = 1
 
-    def reset_position(self):
-        self.position = 0
+#     def initialize(self):
+#         pass
 
-    def get_immediate_position(self):
-        return self.position
+#     def close(self):
+#         pass
 
-    def acceleration(self, value: float=None):
-        if value is None:
-            return self.accel
-        self.accel = value
-        return ''
+#     def get_alarm_code(self):
+#         return ['no alarms']
 
-    def deceleration(self, value: float=None):
-        if value is None:
-            return self.decel
-        self.decel = value
-        return ''
+#     def get_position(self):
+#         return self.position
 
-    def speed(self, value: float=None):
-        if value is None:
-            return self.velocity
-        self.velocity = value
-        return ''
+#     def reset_position(self):
+#         self.position = 0
 
-    def move_relative(self, value: float):
-        self.position += value
+#     def get_immediate_position(self):
+#         return self.position
 
-    def move_absolute(self, position: float):
-        self.position = position
+#     def acceleration(self, value: float=None):
+#         if value is None:
+#             return self.accel
+#         self.accel = value
+#         return ''
+
+#     def deceleration(self, value: float=None):
+#         if value is None:
+#             return self.decel
+#         self.decel = value
+#         return ''
+
+#     def speed(self, value: float=None):
+#         if value is None:
+#             return self.velocity
+#         self.velocity = value
+#         return ''
+
+#     def move_relative(self, value: float):
+#         self.position += value
+
+#     def move_absolute(self, position: float):
+#         self.position = position
