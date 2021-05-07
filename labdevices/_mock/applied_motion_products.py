@@ -8,6 +8,7 @@ from unittest.mock import Mock
 # Motion Products devices and typical responses.
 QUERY_COMMANDS = {
     # STF03D device commands
+    b'\x00\x07DI\r':   b'\x00\x07DI=20000\r', # get_future_movement_value
     b'\x00\x07MV\r':   b'\x00\x07100H179M\r',# idn
     b'\x00\x07AL\r':   b'\x00\x07AL=0100\r', # get_alarm
     b'\x00\x07SC\r':   b'\x00\x07SC=020C\r', # is_moving
@@ -36,9 +37,12 @@ class SocketDummy(Mock):
         Systems devices and sets the correct return value for the
         recv() method.
         """
+        _ = address
         if command in QUERY_COMMANDS:
             self.recv.return_value = QUERY_COMMANDS[command]
-        elif b"DLAY?" in command:
-            self.recv.return_value = b'2,+0.001000000000\r\n'
-        elif b"LAMP?" in command:
-            self.recv.return_value = b'+0.5\r\n'
+        else:
+            # For all commands that set a number (where a number is attached to
+            # the standard command) return the standard answer.
+            # This answer is for now also returned in the case that a not implemented
+            # command is used.
+            self.recv.return_value = b'\x00\x07%\r'

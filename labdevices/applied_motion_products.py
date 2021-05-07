@@ -139,12 +139,14 @@ class STF03D:
     def write(self, cmd: str):
         """Send a message with the correct header and end characters"""
         to_send = self._header + cmd.encode() + self._tail
+        # print(to_send)
         self._device.sendto(to_send, (self.device_ip, UDP_PORT))
 
     def _read(self) -> str:
         """Read UDP message, decode, strip off header and end characters
         and return."""
         respons_raw = self._device.recv(1024)
+        # print(respons_raw)
         respons = respons_raw.decode()
         return respons[2:-1]
 
@@ -218,22 +220,23 @@ class STF03D:
                     status_list.append(val)
         return status_list
 
+    @property
     def is_moving(self) -> bool:
         """Ask for device movement status, return boolean."""
         respons = self.query('SC')[3:]
         status = int(respons, 16)
         return bool(0x0010 & status)
 
-    def get_microstep(self) -> int:
-        """Requests the microstep resolution of the drive."""
+    @property
+    def microstep(self) -> int:
+        """The microstep resolution of the drive.
+        Allowed range is between [0 and 15] (default is 3)
+        """
         respons = self.query('MR')[3:]
         return int(respons)
 
-    def set_microstep(self, value: int=3) -> None:
-        """Sets or requests the microstep resolution of the drive.
-        Argument:
-        value -- between [0 and 15] (standard is 3)
-        """
+    @microstep.setter
+    def microstep(self, value: int) -> None:
         _ = self.query(f'MR{value}')
 
     @property
@@ -243,7 +246,7 @@ class STF03D:
         """
         if self._units_per_motor_turn is None:
             raise Exception('Set calibration first')
-        steps_per_motor_turn = STEPS_PER_TURN[self.get_microstep()]
+        steps_per_motor_turn = STEPS_PER_TURN[self.microstep]
         steps_per_unit = float(steps_per_motor_turn) / float(self._units_per_motor_turn)
         return steps_per_unit
 
@@ -305,7 +308,7 @@ class STF03D:
         """Set current motor position to the new zero position."""
         _ = self.query('SP0')
 
-    def get_immediate_position(self) -> int:
+    def get_immediate_step(self) -> int:
         """This returns the calculated trajectory position, which
         is not always equal to the actual position.
         Units are stepper motor steps.
