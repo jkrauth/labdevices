@@ -1,3 +1,11 @@
+## next
+
+- implement a general device interface with a set of basic methods that has to apply for each device and that is tested among the package
+- implement unittests for all devices and their dummy versions
+- implement a new way of creating dummy devices that uses the actual driver class of a device.
+- some changes create incompatibilities with the previous version. This was necessary to make the package more uniform, according to the newly implemented tests.
+- bugfixes
+
 # v0.9.0
 
 - added Local Oscillator from Kuhne Electronic
