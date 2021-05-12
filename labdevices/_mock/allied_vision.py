@@ -47,12 +47,14 @@ class CameraDummy(Mock):
 
     def __init__(self, device_index):
         """ Create the attributes for the camera with their values. """
+        _ = device_index
         super().__init__()
 
         for item, val in CAMERA_ATTRIBUTES.items():
             setattr(self, item, val)
 
-    def acquire_frame(self):
+    @staticmethod
+    def acquire_frame():
         """ Returns a frame dummy object. """
         return FrameDummy()
 

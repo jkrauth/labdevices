@@ -16,7 +16,6 @@ QUERY_COMMANDS = {
     "SPAN?":        "1300.0\r\n",
     "CWPLS?":       "1\r\n",
     "PLMOD?":       "   38\r\n",
-
 }
 
 class PLXDummy(Mock):
