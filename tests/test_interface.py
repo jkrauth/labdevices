@@ -133,11 +133,11 @@ class RohdeSchwarzInterfaceTest(unittest.TestCase):
 class StanfordResearchSystemsInterfaceTest(unittest.TestCase):
     """ For testing the interface of Stanford Research Systems devices. """
     def setUp(self):
-        self.dg = stanford_research_systems.DG645('', 1)
+        self.device = stanford_research_systems.DG645('', 1)
 
     def test_dg645_interface(self):
-        self.assertIsInstance(self.dg, Device)
-        self.assertTrue(hasattr(self.dg, '_device'))
+        self.assertIsInstance(self.device, Device)
+        self.assertTrue(hasattr(self.device, '_device'))
 
 class ThorlabsInterfaceTest(unittest.TestCase):
     """ For testing the interface of Thorlabs devices. """
