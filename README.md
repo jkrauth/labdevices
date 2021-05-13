@@ -66,7 +66,7 @@ or similar corresponding commands. For each device there should be a dummy devic
 from labdevices.thorlabs import TSP01Dummy
 ```
 
-with *Dummy* added to the device's class name.
+with *Dummy* added to the device's class name. All methods of these mock devices return the same type as their real equivalents. They also accept functions that change their internal parameters. However, their functionality is for now limited, i.e. functions that get a certain parameter will always return the same value, even if the parameter was set to a different value.
 
 ## Testing
 
@@ -93,17 +93,15 @@ python -m unittest test.test_keysight.CounterDummyTest
 
 As shown here, these tests should exist for each device and its dummy version. For CI only the tests of the dummy devices are run (see `.travis.yml`). The test with the actual device can only be performed with the respective device attached.
 
-The idea of those tests is to check that all the methods work, that the return format is correct, and that the dummy devices support all functionality.
+The idea of those tests is to check that all the methods work, that the return format is correct, and that the dummy devices support calling all available methods and properties.
 
-In the future one might want to improve the tests by e.g. changing a parameter and checking whether that parameter was actually changed.
+In the future one might want to improve the tests by e.g. changing a parameter and checking whether that parameter was actually changed. But this is currently not supported by the dummy devices.
 
 In order to run a test across all the dummy classes use:
 
 ```console
 python -m unittest test -k DummyTest
 ```
-
-
 
 ## Troubleshooting
 
