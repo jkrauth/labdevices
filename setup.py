@@ -33,7 +33,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Intended Audience :: Science/Research",
     ],
-    packages=find_packages(include=['labdevices']),
+    packages=find_packages(include=['labdevices', 'labdevices._mock']),
     include_package_data=True,
     python_requires='>=3.6',
     install_requires=requirements,
