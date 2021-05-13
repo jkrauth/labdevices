@@ -171,7 +171,7 @@ class STF03D:
         value -- in units as defined by the calibration.
         """
         steps = self._unit_to_step(value)
-        print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
+        # print(f'Move by/to {value} degrees, equiv. to {steps} steps.')
         _ = self.query(f'DI{steps}')
 
     def set_calibration(self, units_per_motor_turn: float) -> None:
