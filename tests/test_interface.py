@@ -5,7 +5,7 @@ from typing import Any
 import unittest
 
 from labdevices import (
-    allied_vision,
+    # allied_vision, # needs Vimba installed, that doesn't work with CI
     ando,
     applied_motion_products,
     keysight,
@@ -44,15 +44,15 @@ class Device(metaclass=DeviceMeta):
     """ Device interface built from DeviceMeta metaclass. """
 
 
-@unittest.skip("Skip not message-based driver")
-class AlliedVisionInterfaceTest(unittest.TestCase):
-    """ For testing the interface of Allied Vision devices. """
-    def setUp(self):
-        self.manta = allied_vision.Manta('')
+# @unittest.skip("Skip not message-based driver")
+# class AlliedVisionInterfaceTest(unittest.TestCase):
+#     """ For testing the interface of Allied Vision devices. """
+#     def setUp(self):
+#         self.manta = allied_vision.Manta('')
 
-    def test_manta_interface(self):
-        self.assertIsInstance(self.manta, Device)
-        self.assertTrue(hasattr(self.manta, '_device'))
+#     def test_manta_interface(self):
+#         self.assertIsInstance(self.manta, Device)
+        # self.assertTrue(hasattr(self.manta, '_device'))
 
 class AndoInterfaceTest(unittest.TestCase):
     """ For testing the interface of Ando devices. """
