@@ -1,4 +1,4 @@
-## next
+## v0.10.0
 
 - implement a general device interface with a set of basic methods that has to apply for each device and that is tested among the package
 - implement unittests for all devices and their dummy versions
