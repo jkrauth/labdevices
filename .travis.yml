@@ -7,5 +7,5 @@ install:
 script:
   - pylint --fail-under=9.80 labdevices
   - pylint --fail-under=9.80 --disable missing-docstring tests
-  - python -m unittest tests -k DummyTest
+  - python -m unittest discover tests -k Dummy
   - python -m unittest tests.test_interface
