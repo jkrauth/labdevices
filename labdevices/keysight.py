@@ -7,27 +7,27 @@ Date created: 2020/11/11
 Python Version: 3.7
 
 """
-from typing import NamedTuple
-from random import random
+from typing import NamedTuple, Tuple, get_type_hints
 import re
 import pyvisa as visa
 import numpy as np
 
-PREAMBLE_TYPES = (int, int, int, int, float, float, int, float, float, int)
+from ._mock.keysight import PyvisaDummy
 
 class Preamble(NamedTuple):
     """ The data structure of the preamble of a waveform.
     Contains all the trace settings. Used in Oscilloscope class. """
-    data_format: PREAMBLE_TYPES[0]    # 0 = BYTE, 1 = WORD, 4 = ASCII
-    data_type: PREAMBLE_TYPES[1]      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
-    points: PREAMBLE_TYPES[2]         # number of data points transferred
-    count: PREAMBLE_TYPES[3]          # 1 and is always 1
-    x_increment: PREAMBLE_TYPES[4]    # time difference between data points.
-    x_origin: PREAMBLE_TYPES[5]       # always the first data point in memory
-    x_reference: PREAMBLE_TYPES[6]    # specifies the data point associated with x-origin
-    y_increment: PREAMBLE_TYPES[7]    # voltage diff between data points
-    y_origin: PREAMBLE_TYPES[8]       # value is the voltage at center screen
-    y_reference: PREAMBLE_TYPES[9]    # specifies the data point where y-origin occurs
+    # Do not change the order of these lines! (the get_preamble method relies on it.)
+    data_format: int    # 0 = BYTE, 1 = WORD, 4 = ASCII
+    data_type: int      # 0 = NORM, 1 = PEAK, 2 = AVER, 3 = HRES
+    points: int         # number of data points transferred
+    count: int          # 1 and is always 1
+    x_increment: float  # time difference between data points.
+    x_origin: float     # always the first data point in memory
+    x_reference: int    # specifies the data point associated with x-origin
+    y_increment: float  # voltage diff between data points
+    y_origin: float     # value is the voltage at center screen
+    y_reference: int    # specifies the data point where y-origin occurs
 
 
 class KeysightDevice:
@@ -48,7 +48,7 @@ class KeysightDevice:
         else:
             raise ValueError("Address needs to be an IP or a valid VISA address.")
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Establish connection to device."""
         self._device = visa.ResourceManager().open_resource(
             self.device_address, read_termination = '\n'
@@ -64,11 +64,11 @@ class KeysightDevice:
         self._device.close()
         self._device = None
 
-    def write(self, cmd: str):
+    def write(self, cmd: str) -> None:
         """ Send a command to the device """
         self._device.write(cmd)
 
-    def query(self, cmd: str):
+    def query(self, cmd: str) -> str:
         """ Query  """
         response = self._device.query(cmd)
         return response
@@ -80,7 +80,7 @@ class KeysightDevice:
         return response[0]
 
     @property
-    def idn(self):
+    def idn(self) -> str:
         """ Get device identity """
         idn = self.query("*IDN?")
         return idn
@@ -112,7 +112,7 @@ class Counter(KeysightDevice):
     @property
     def trigger_mode(self) -> str:
         """ Get the trigger mode """
-        return self.query("TRIGger:SOuRce?")
+        return self.query("TRIGger:SOURce?")
 
     @trigger_mode.setter
     def trigger_mode(self, mode: str='IMM'):
@@ -128,11 +128,21 @@ class Counter(KeysightDevice):
         else:
             raise Exception('Provide an existing mode')
 
+    def start_frequency_measurement(self):
+        """ Initialize frequency measurement. """
+        self.write(":INIT")
+
+    def read_frequency_measurement(self) -> float:
+        """ Get frequency of last measurement from buffer. """
+        frequency = self.query("FETCH?")
+        return float(frequency)
+
     def measure_frequency(
-        self, expected: int = 10e6,
+        self, expected: float = 10e6,
         resolution: float=0.1, channel: int=1
         ) -> float:
-        """Returns frequency measured, within set gettime.
+        """Measures the frequency during the time of gate_time
+        and returns the result.
         Arguments:
         expected   -- the expected frequency in Hz, default 10 MHz
         resolution -- measurement resolution in Hz, default 0.1 Hz.
@@ -146,29 +156,18 @@ class Counter(KeysightDevice):
         return float(frequency)
 
 
-class CounterDummy:
-    """ Dummy device for Keysight Counter. """
-    def __init__(self, address: str):
-        self.idn = "Dummy Counter"
-        self.address = address
-        self.gate_time = 0.1
-        self.trigger_mode = 'NORM'
+class CounterDummy(Counter):
+    """
+    Mock Keysight Counter
+
+    Provides a class that immitates a real counter and can be
+    used for development.
+    """
 
     def initialize(self):
-        print(f'connected to {self.idn}')
-
-    def close(self):
-        print('closing connection to device')
-
-    def reset(self):
-        pass
-
-    def measure_frequency(
-        self, expected: int = 10e6,
-        resolution: float=0.1, channel: int=1
-        ) -> float:
-        return float(10e6)
-
+        """Establish connection to mock device."""
+        self._device = PyvisaDummy()
+        print(f"Connected to:\n{self.idn}")
 
 
 
@@ -176,11 +175,6 @@ class Oscilloscope(KeysightDevice):
     """
     Class for Keysight oscilloscopes. So far tested with the 3000T X-Series.
     """
-
-    def _ieee_query(self, cmd: str) -> bytes:
-        self._device.timeout = 20000
-        response = self._device.query_binary_values(cmd, datatype='s')
-        return response[0]
 
     def set_t_scale(self, sec_per_division: float):
         """ Set the units per division """
@@ -216,7 +210,7 @@ class Oscilloscope(KeysightDevice):
         result = self.query(":MEASure:VPP?")
         return float(result)
 
-    def get_screen_shot(self) -> bytes:
+    def get_screenshot(self) -> bytes:
         """
         Get an image of the oscilloscope display. The return can be
         simply written to a file. Don't forget the binary mode then.
@@ -226,23 +220,28 @@ class Oscilloscope(KeysightDevice):
         # To get a NOT inverted image
         self.write(":HARDcopy:INKSaver OFF")
         # Get data
-        image_bytes = self._ieee_query(":DISPlay:DATA? PNG, COLor")
+        image_bytes = self.ieee_query(":DISPlay:DATA? PNG, COLor")
         return image_bytes
 
-    def get_trace(self, channel: int):
+    def get_trace(self, channel: int) -> Tuple[np.ndarray]:
         """ Get the trace of a given channel from the oscilloscope.
         Returns:
         time, voltage -- as numpy arrays
         """
-        self._device.timeout = 10000
+        # Increase timeout
+        general_timeout = self._device.timeout
+        self._device.timeout = 20000
 
         # Prepare waveform and get waveform settings
         self._prepare_trace_readout(channel)
         preamble = self.get_preamble(channel)
 
         # Get the voltage data
-        data_bytes = self._ieee_query(":WAVeform:DATA?")
+        data_bytes = self.ieee_query(":WAVeform:DATA?")
         voltage = np.asarray(self._bytes_to_voltage(data_bytes, preamble))
+
+        # Reset timeout:
+        self._device.timeout = general_timeout
 
         # Create time axis
         x_min = preamble.x_origin
@@ -287,40 +286,22 @@ class Oscilloscope(KeysightDevice):
         """
         # Set source for waveform commands
         self.write(f':WAVeform:SOURce {channel}')
+
         respons = self.query(":WAVeform:PREamble?").split(',')
-        parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
+
+        # Convert strings into correct types
+        preamble_types = list(get_type_hints(Preamble).values())
+        parameters = list(map(lambda x, y: x(y), preamble_types, respons))
         return Preamble(*parameters)
 
-class OscilloscopeDummy:
-    """Class for testing purpose only. No device needed."""
-    def __init__(self, port):
-        self.port = port
-        self.result = 0
-        self.idn = "Dummy Scope"
+class OscilloscopeDummy(Oscilloscope):
+    """
+    Mock Keysight Oscilloscope
 
+    Provides a class that immitates a real oscilloscope and can be
+    used for development.
+    """
     def initialize(self):
-        print(f"Connected to {self.idn}")
-
-    def close(self):
-        print(f"Closing {self.idn}")
-
-    def set_t_scale(self, time: float):
-        pass
-
-    def get_volt_avg(self, channel: int):
-        return random() + channel + self.result
-
-    def get_volt_max(self, channel: int):
-        return random() + channel + self.result
-
-    def get_volt_peakpeak(self, channel: int):
-        return random() + channel + self.result
-
-    def screen_shot(self):
-        pass
-
-    def get_trace(self, channel: int):
-        x_data = np.arange(10)
-        y_data = np.arange(10)
-        print('dummy trace acquired')
-        return x_data, y_data
+        """Establish connection to mock device."""
+        self._device = PyvisaDummy()
+        print(f"Connected to:\n{self.idn}")

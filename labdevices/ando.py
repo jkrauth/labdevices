@@ -8,8 +8,11 @@ Author: Julian Krauth
 Date created: 27.11.2019
 Python Version: 3.7
 """
+from typing import Tuple
 from time import sleep
 import numpy as np
+
+from ._mock.ando import PLXDummy
 
 try:
     from plx_gpib_ethernet import PrologixGPIBEthernet
@@ -21,14 +24,15 @@ except ImportError as err:
     )
 
 
+
 class SpectrumAnalyzer:
     """Driver for the Ando Spectrum Analyzer. The connection is done via
     a prologix gpib-to-ethernet adapter."""
 
     def __init__(
             self,
-            ip_addr='10.0.0.40',
-            gpib=1):
+            ip_addr: str,
+            gpib: int=1):
         """
         Arguments:
         ip_addr -- str, ip address of the GPIB Ethernet Adapter
@@ -44,38 +48,53 @@ class SpectrumAnalyzer:
         self._device = PrologixGPIBEthernet(self.ip_addr)
         self._device.connect()
         self._device.select(self.gpib)
+        print('Connected to Ando')
 
-        idn = self.query('*IDN?')
-        idn_respons = [
-            "Manufacturer: ",
-            "Device name: ",
-            "Serial no.: ",
-            "Software version: "
-        ]
-        i=0
-        for each in idn:
-            print(idn_respons[i], each)
-            i+=1
+        # idn_respons = [
+        #     "Manufacturer: ",
+        #     "Device name: ",
+        #     "Serial no.: ",
+        #     "Software version: "
+        # ]
+        # i=0
+        # for each in self.idn:
+        #     print(idn_respons[i], each)
+        #     i+=1
 
-    def write(self, cmd:str):
+    def close(self):
+        """Close connection to device."""
+        if self._device is not None:
+            self._device.close()
+        else:
+            print('Ando is already closed!')
+
+    def write(self, cmd: str):
+        """ Send command to device """
         self._device.write(cmd)
 
-    def query(self, query:str):
+    def query(self, query: str) -> str:
+        """ Query device for information """
         query = self._device.query(query)
         query = query.rstrip('\r\n')
-        query = query.split(',')
         return query
+
+    @property
+    def idn(self) -> list:
+        """ Get device identity """
+        idn = self.query('*IDN?')
+        return idn.split(',')
+
 
     def finish(self):
         """waits till a certain task is finished"""
-        while int(self._device.query('SWEEP?')[0])!=0:
+        while self.query('SWEEP?') != '0':
             sleep(.5)
 
     @property
     def sampling(self) -> int:
         """ Get sampling rate"""
-        smpl = self.query('SMPL?')
-        return int(smpl[0])
+        result = self.query('SMPL?')
+        return int(result)
 
     @sampling.setter
     def sampling(self, smpl: int):
@@ -85,18 +104,10 @@ class SpectrumAnalyzer:
         else:
             self.write(f'SMPL{smpl}')
 
-
-    def close(self):
-        """Close connection to device."""
-        if self._device is not None:
-            self._device.close()
-        else:
-            print('Ando is already closed!')
-
     def do_sweep(self):
         """
         Does a sweep with the current settings and saves the data in a buffer.
-        Read out the buffer using self.getData()
+        Read out the buffer using self.get_x_axis() and self.get_y_axis()
         """
         self.write('SGL')
 
@@ -112,25 +123,31 @@ class SpectrumAnalyzer:
         i_rep = 50
         for i in range(i_rep):
             #get data
-            axis = self.query('%s R%i-R%i' % (cmd,step*i+1,step*(i+1)))
-            axis = axis[1:]
-            axis = np.array(axis, dtype = float)
+            result = self.query('%s R%i-R%i' % (cmd, step*i+1, step*(i+1)))
+            axis_piece = result.lstrip().split(',')
+            axis_piece = axis_piece[1:]
+            axis_piece = np.array(axis_piece, dtype = float)
             if i == 0:
-                x_data = axis
+                data = axis_piece
             else:
-                x_data = np.append(x_data,axis)
-        return x_data
+                data = np.append(data, axis_piece)
+        return data
 
-    def get_x_axis(self) -> np.ndarray:
+    def get_x_data(self) -> np.ndarray:
+        """ Obtain the x axis values in units of nm. """
         return self._get_data('WDATA')
 
     def get_y_data(self) -> np.ndarray:
+        """ Obtain the y axis values in the units shown on the screen. """
         return self._get_data('LDATA')
 
-    def get_ana(self):
+    def get_ana(self) -> tuple:
         """
         this method only works when ANDO is in a certain mode???
         Haven't figured that out yet...
+
+        Return:
+            tuple -- center wavelength, bandwidth, modes
         """
         analysis = self.query('ANA?')
         if len(analysis) == 3:
@@ -151,10 +168,10 @@ class SpectrumAnalyzer:
         Allowed values are between 350.00 and 1750.00 nm
         """
         wavelength = self.query('CTRWL?')
-        return float(wavelength[0])
+        return float(wavelength)
 
     @center.setter
-    def center(self, wavelength: float=None):
+    def center(self, wavelength: float):
         """
         Set the center wavelength in units of nm.
         Allowed values are between 350.00 and 1750.00 nm
@@ -168,28 +185,30 @@ class SpectrumAnalyzer:
         Allowed values are 0, or between 1.00 and 1500.00 nm
         """
         span = self.query('SPAN?')
-        return float(span[0])
+        return float(span)
 
     @span.setter
-    def span(self, span: float=None):
+    def span(self, span: float):
         """
         Set the wavelength span in units of nm.
         Allowed values are 0, or between 1.00 and 1500.00 nm
         """
         self.write('SPAN%f' % (span))
 
-    @property
-    def cw_mode(self) -> int:
+    def get_measurement_mode(self) -> Tuple[int, str]:
         """
         Get measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
         1 cw mode
         """
-        continuous_wave = self.query('CWPLS?')
-        return int(continuous_wave[0])
+        modes = {
+            0: 'pulsed',
+            1: 'cw',
+        }
+        mode = int(self.query('CWPLS?'))
+        return mode, modes[mode]
 
-    @cw_mode.setter
-    def cw_mode(self, mode: int):
+    def set_measurement_mode(self, mode: int):
         """
         Get/Set measurement mode of ANDO for cw or pulsed laser
         0 pulsed mode
@@ -200,13 +219,29 @@ class SpectrumAnalyzer:
         elif mode == 1:
             self.write('CLMES')
         else:
-            print(mode)
-            print("ANDO mode number has to be either 0 or 1!")
+            print(f"ANDO mode number has to be either 0 or 1, not {mode}!")
 
-
-    def peak_hold_mode(self, time: int):
+    def get_trigger_mode(self) -> Tuple[int, str]:
         """
-        If in pulsed mode (see cw_mode method) the Ando can use three
+        0 - measuring chop light by using a low pass filter
+        1 - external trigger mode
+        2 + hold time [ms] - peak hold mode
+        """
+        modes = {
+            0: 'LPF',
+            1: 'EXTRG',
+            2: 'PKHLD'
+        }
+        mode = int(self.query('PLMOD?'))
+        if mode < 2:
+            result = (mode, modes[mode])
+        else:
+            result = (mode, modes[2])
+        return result
+
+    def set_hold_mode(self, time: int):
+        """
+        If in pulsed mode (see get_measurement_mode method) the Ando can use three
         different ways to trigger. One is the peak_hold_mode, which
         needs the rough pulse repetition time.
         Argument:
@@ -215,41 +250,22 @@ class SpectrumAnalyzer:
         self.write(f'PKHLD{time}')
 
 
-class SpectrumAnalyzerDummy:
+class SpectrumAnalyzerDummy(SpectrumAnalyzer):
     """Class for testing purpose only."""
 
-    def __init__(
-        self,
-        ip_addr='10.0.0.40',
-        gpib=1):
-
-        self._device = None
-        self.ip_addr = ip_addr
-        self.gpib = gpib
-        self.center = 390
-        self.span = 20
-        self.cw_mode = 0
-
     def initialize(self):
-        self._device = 1
-        print('Connected to Ando Dummy')
-
-    def close(self):
-        if self._device is not None:
-            pass
-        else:
-            print('Ando dummy is already closed!')
-
-    def peak_hold_mode(self, time):
-        pass
-
+        """Open connection to device."""
+        self._device = PLXDummy()
+        self._device.connect()
+        self._device.select(self.gpib)
+        print(f'Connected to {self.idn}')
 
 
 
 if __name__ == "__main__":
 
     print("This is the Conroller Driver example for the Ando Spectrometer.")
-    ando = SpectrumAnalyzer()
+    ando = SpectrumAnalyzer('10.0.0.40', 1234)
     # Connect to Ando
     ando.initialize()
     # Do what you want

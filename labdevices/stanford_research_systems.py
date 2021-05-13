@@ -6,8 +6,11 @@ contains:
 File name: stanford_research_systems.py
 Python version: 3.7
 """
+from typing import Tuple, Union
 import socket
 import time
+
+from ._mock.stanford_research_systems import SocketDummy
 
 
 class DG645:
@@ -56,7 +59,6 @@ class DG645:
         self._device.settimeout(self.timeout)
         self._device.connect((self.tcp, self.port))
         time.sleep(0.2)
-        print('bla')
         print(f'Connected to:\n    {self.idn}')
 
     def close(self):
@@ -84,10 +86,11 @@ class DG645:
 
     @property
     def idn(self) -> str:
+        """ Get identification of device. """
         idn = self.query('*IDN?')
         return idn
 
-    def set_delay(self, channel, delay: float, reference = "T0"):
+    def set_delay(self, channel: Union[int, str], delay: float, reference: Union[int, str] = "T0"):
         """Set the delay of a certain channel with respect to a reference.
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
@@ -105,23 +108,24 @@ class DG645:
         #wait for 100 ms, this is the time it will take to write the command
         time.sleep(0.1)
 
-    def get_delay(self, channel) -> float:
+    def get_delay(self, channel: Union[int, str]) -> Tuple[int, float]:
         """Request the delay of a certain channel
-        Arguments:
-        channel -- str/int corresponding to a channel (see self.DEFAULTS)
 
-        Returns -- float, the delay in seconds.
-        Optionally also the reference channel.
+        Arguments:
+            channel -- str/int corresponding to a channel (see self.DEFAULTS)
+
+        Returns -- (int, float) | reference channel, delay in seconds.
         """
+
         if isinstance(channel, str):
             channel = self.DEFAULTS['channel'][channel]
         cmd = f'DLAY? {channel}'
-        respons = self.query(cmd)
-        #reference = respons[0]
-        delay = float(respons[2:])
-        return delay
+        respons = self.query(cmd).split(',')
+        reference = int(respons[0])
+        delay = float(respons[1])
+        return reference, delay
 
-    def get_output_level(self, channel) -> float:
+    def get_output_level(self, channel: Union[int, str]) -> float:
         """Request output amplitude of a channel
         Arguments:
         channel -- str/int corresponding to a channel (see self.DEFAULTS)
@@ -132,35 +136,19 @@ class DG645:
             channel = self.DEFAULTS['outputBNC'][channel]
         cmd = f'LAMP? {channel}'
         respons = self.query(cmd)
-        return respons
+        return float(respons)
 
 
 class DG645Dummy(DG645):
     """For testing purpose only. No device needed."""
-    def __init__(self, tcp: str, port: int, timeout: float = 0.010):
-        super().__init__(tcp, port)
-        self.idn = 'Dummy DG645'
 
     def initialize(self):
-        pass
-
-    def close(self):
-        pass
-
-    def write(self, cmd):
-        pass
-
-    def query(self, cmd):
-        return 'answer'
-
-    def set_delay(self, channel, delay: float, reference = 'T0'):
-        pass
-
-    def get_delay(self, channel) -> float:
-        return float(1)
-
-    def get_output_level(self, channel):
-        return float(1)
+        """Connect to the device."""
+        self._device = SocketDummy()
+        self._device.settimeout(self.timeout)
+        self._device.connect((self.tcp, self.port))
+        time.sleep(0.2)
+        print(f'Connected to:\n    {self.idn}')
 
 
 if __name__ == "__main__":

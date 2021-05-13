@@ -20,8 +20,11 @@ Author: Julian Krauth
 Date created: 2019/11/14
 Python Version: 3.7
 """
+from typing import Tuple
 import numpy as np
 import pymba
+
+from ._mock.allied_vision import VimbaDummy
 
 def get_available_cameras() -> list:
     """ Find and show the cameras connected to the network. """
@@ -50,6 +53,7 @@ class Manta:
 
     def initialize(self) -> None:
         """Establish connection to camera"""
+
         self.vimba.startup()
         devices = self.vimba.camera_ids()
         for index, identity in enumerate(devices):
@@ -76,11 +80,13 @@ class Manta:
 
     @property
     def model_name(self) -> str:
+        """ Return the model name of the device """
         name = self._device.DeviceModelName
         return name
 
     @property
     def packet_size(self) -> int:
+        """ Return the packet size for Ethernet communication """
         return self._device.GVSPPacketSize
 
     @packet_size.setter
@@ -106,17 +112,20 @@ class Manta:
         self._device.ExposureTimeAbs = int(expos*1e6)
 
     @property
-    def gain(self):
+    def gain(self) -> float:
+        """ Return the gain of the camera.
+        The possible range of gain values is camera dependent. """
         # Best image quality is achieved with gain = 0
         gain = self._device.Gain
         return gain
 
     @gain.setter
-    def gain(self,gain):
+    def gain(self, gain: float):
         self._device.Gain = gain
 
     @property
     def roi_x(self) -> int:
+        """ The starting position of the region of interest on the x axis """
         return self._device.OffsetX
 
     @roi_x.setter
@@ -125,6 +134,7 @@ class Manta:
 
     @property
     def roi_y(self) -> int:
+        """ The starting position of the region of interest on the y axis """
         return self._device.OffsetY
 
     @roi_y.setter
@@ -133,6 +143,7 @@ class Manta:
 
     @property
     def roi_dx(self) -> int:
+        """ The width of the region of interest on the x axis """
         return self._device.Width
 
     @roi_dx.setter
@@ -141,6 +152,7 @@ class Manta:
 
     @property
     def roi_dy(self) -> int:
+        """ The width of the region of interest on the y axis """
         return self._device.Height
 
     @roi_dy.setter
@@ -148,18 +160,19 @@ class Manta:
         self._device.Height = val
 
     @property
-    def sensor_size(self):
+    def sensor_size(self) -> Tuple[int, int]:
         """Returns number of pixels in width and height of the sensor"""
         width = self._device.SensorWidth
         height = self._device.SensorHeight
         return width, height
 
     @property
-    def acquisition_mode(self):
+    def acquisition_mode(self) -> str:
+        """ Typically 'Continuous' or 'SingleFrame' """
         return self._device.AcquisitionMode
 
     @acquisition_mode.setter
-    def acquisition_mode(self, mode):
+    def acquisition_mode(self, mode: str):
         options = {'SingleFrame', 'Continuous'}
         if mode in options:
             self._device.arm(mode)
@@ -232,36 +245,9 @@ class Manta:
         self._device.PixelFormat = pix
 
 
-class MantaDummy:
+class MantaDummy(Manta):
     """Manta class for testing. It doesn't need any device connected."""
-
     def __init__(self, device_id: str):
-        self.idn = "Dummy " + device_id
-        self._device = None
-        self.height = 1216
-        self.width = 1936
-        self.exposure = 20
-        self.gain = 1
-        self.roi_x = 0
-        self.roi_y = 0
-        self.roi_dx = 100
-        self.roi_dy = 100
-        self.trig_source = 'External'
-        self.pix_format = 'Mono8'
-
-    def initialize(self):
-        self._device = 1
-        print('Connected to camera dummy!')
-
-    def close(self):
-        if self._device is not None:
-            pass
-        else:
-            print('Camera dummy closed!')
-
-    def take_single_img(self):
-        return 255*np.random.rand(self.height, self.width)
-
-    @property
-    def sensor_size(self):
-        return self.width, self.height
+        """ Replace the real pymba package with a Mock version. """
+        super().__init__(device_id)
+        self.vimba = VimbaDummy()

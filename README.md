@@ -34,9 +34,15 @@ Most dependencies are installed automatically. For some devices, however, there 
 
 It is recommended to install the package into a virtual environment.
 
-### A) For development
+### A) For general use
 
-Clone the repository. From inside the package folder run
+```console
+pip install labdevices
+```
+
+### B) For development
+
+Clone the repository and from inside the package folder run
 
 ```console
 pip install -e .
@@ -46,27 +52,58 @@ pip install -e .
 
 There is also a Jupyter Notebook provided that contains some use examples and is handy for development.
 
-### B) For general use
-
-```console
-pip install labdevices
-```
-
 ## Usage
 
-Once the labdevices package is installed, for example simply do
+Once the labdevices package is installed, simply do e.g.
 
 ```python
 from labdevices.thorlabs import TSP01
 ```
 
-For each device there should be a dummy device available in order to test software, when there is actually no device connected. For the switching to a dummy device simply import
+or similar corresponding commands. For each device there should be a dummy device available in order to test software, when there is actually no device connected. For the switching to a dummy device simply import
 
 ```python
 from labdevices.thorlabs import TSP01Dummy
 ```
 
 with *Dummy* added to the device's class name.
+
+## Testing
+
+There is two kinds of tests implemented:
+
+### Interface tests
+
+Run by 
+
+```console
+python -m unittest test.test_interface
+```
+
+This checks that all devices have the basic methods implemented that a device needs, like e.g. `initialize()`, `query()`, or `close()`
+
+### Unit tests
+
+Run by e.g.
+
+```console
+python -m unittest test.test_keysight.CounterTest
+python -m unittest test.test_keysight.CounterDummyTest
+```
+
+As shown here, these tests should exist for each device and its dummy version. For CI only the tests of the dummy devices are run (see `.travis.yml`). The test with the actual device can only be performed with the respective device attached.
+
+The idea of those tests is to check that all the methods work, that the return format is correct, and that the dummy devices support all functionality.
+
+In the future one might want to improve the tests by e.g. changing a parameter and checking whether that parameter was actually changed.
+
+In order to run a test across all the dummy classes use:
+
+```console
+python -m unittest test -k DummyTest
+```
+
+
 
 ## Troubleshooting
 
@@ -102,7 +139,7 @@ The communication with the usb device should now work.
 
 ### Ethernet devices
 
-If an Ethernet device is not recognized, check its settings. Usually a fixed IP address can be given, which should be part of the local subnet.
+If an Ethernet device is not recognized, check its settings. Usually a fixed (not dynamic) IP address can be given. That address has to be part of the local subnet.
 
 ## Contact
 

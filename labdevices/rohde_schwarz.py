@@ -8,18 +8,19 @@ Python Version: 3.7
 
 """
 import re
-from typing import NamedTuple
+from typing import NamedTuple, Tuple, get_type_hints
 import numpy as np
 import pyvisa
 
-PREAMBLE_TYPES = (float, float, int, int)
+from ._mock.rohde_schwarz import PyvisaDummy
 
 class Preamble(NamedTuple):
     """ The data structure containing the axis information of the waveform """
-    x_start: PREAMBLE_TYPES[0]              # in sec
-    x_stop: PREAMBLE_TYPES[1]               # in sec
-    points: PREAMBLE_TYPES[2]               # waveform length in samples
-    values_per_sample: PREAMBLE_TYPES[3]    # usually 1
+    # Do not change the order of these lines! (the get_preamble method relies on it.)
+    x_start: float          # in sec
+    x_stop: float           # in sec
+    points: int             # waveform length in samples
+    values_per_sample: int  # usually 1
 
 
 class RSDevice:
@@ -102,7 +103,7 @@ class FPC1000(RSDevice):
             raise ValueError("Address needs to be an IP address.")
         super().__init__(address)
 
-    def get_trace(self):
+    def get_trace(self) -> Tuple[np.ndarray, np.ndarray]:
         """Get the trace which is currently shown on the display.
         Returns:
         x, y -- as numpy arrays.
@@ -118,23 +119,15 @@ class FPC1000(RSDevice):
         return x_data, y_data
 
 
-
-class FPC1000Dummy:
-    """ For testing only """
-    def __init__(self, address: str):
-        self.address = address
-        self.idn = 'dummy'
+class FPC1000Dummy(FPC1000):
+    """
+    Mock Rohde & Schwarz Spectrum Analyzer FPC1000
+    """
 
     def initialize(self):
-        pass
-
-    def close(self):
-        pass
-
-    def get_trace(self):
-        x_data = np.arange(10)
-        y_data = np.arange(10)
-        return x_data, y_data
+        """ Establish connection to mock device. """
+        self._device = PyvisaDummy()
+        print(f"Connected to:\n{self.idn}")
 
 
 class Oscilloscope(RSDevice):
@@ -180,16 +173,31 @@ class Oscilloscope(RSDevice):
         result = self.query("MEASurement:RESult?")
         return float(result)
 
-    def get_trace(self, channel: int):
+    def get_screenshot(self) -> bytes:
+        """Get an image of the oscilloscope display. The return can be
+        simply written to a file. Don't forget the binary mode then.
+        Returns:
+        png image -- bytes
+        """
+        # Close all windows when taking screenshot so signal can be seen.
+        # self.write('HCOPy:CWINdow ON')
+        # Set format
+        self.write('HCOPy:LANG PNG')
+        image_bytes = self.ieee_query('HCOPy:DATA?')
+        return image_bytes
+
+    def get_trace(self, channel: int) -> Tuple[np.ndarray, np.ndarray]:
         """ Get the trace of a given channel from the oscilloscope.
         Returns:
         time, voltage -- as numpy arrays
         """
+
         # Set channel for single trigger
         self.write(f'CHANnel{channel}:SINGle')
         # Get trace data
         voltage = self.query(f'FORMat ASC; CHANnel{channel}:DATA?').split(',')
         voltage = np.asarray(voltage).astype(np.float)
+
         # Get time data
         # this query returns (xstart, xstop, length,Number of values per sample interval) as string
         preamble = self.get_preamble(channel)
@@ -201,49 +209,19 @@ class Oscilloscope(RSDevice):
         Returns:
         preamble -- Preamble"""
         respons = self.query(f'CHANnel{channel}:DATA:HEADer?').split(',')
-        parameters = map(lambda x, y: x(y), PREAMBLE_TYPES, respons)
+        preamble_types = list(get_type_hints(Preamble).values())
+        parameters = map(lambda x, y: x(y), preamble_types, respons)
         return Preamble(*parameters)
-
-    def get_screen_shot(self) -> bytes:
-        """Get an image of the oscilloscope display. The return can be
-        simply written to a file. Don't forget the binary mode then.
-        Returns:
-        png image -- bytes
-        """
-        # self.write('HCOPy:CWINdow ON') this closes all windows
-        # when taking screen shot so signal can be seen.
-        # set format
-        self.write('HCOPy:LANG PNG')
-        image_bytes = self.ieee_query('HCOPy:DATA?')
-        return image_bytes
 
     def set_t_scale(self, time: str):
         """format example: '1.E-9'"""
         self.write(cmd = f":TIMebase:SCALe {time}")
 
 
-class OscilloscopeDummy:
+class OscilloscopeDummy(Oscilloscope):
     """ Dummy class for R&S Oscilloscope """
-    def __init__(self, address: str):
-        self.address = address
-        self.value = 10.
-        self.idn = 'DummyScope'
 
     def initialize(self):
-        pass
-
-    def close(self):
-        pass
-
-    def get_volt_avg(self, channel: int):
-        return self.value
-
-    def get_volt_max(self, channel: int):
-        return self.get_volt_avg(channel)
-
-    def get_volt_peakpeak(self, channel: int):
-        return self.get_volt_avg(channel)
-
-    def get_trace(self, channel: int):
-        x_data = np.arange(int(self.value))
-        return x_data, x_data
+        """ Establish connection to mock device. """
+        self._device = PyvisaDummy()
+        print(f"Connected to:\n{self.idn}")

@@ -17,7 +17,10 @@ Date created: 2020/08/25
 Python version: 3.7
 """
 import time
+from typing import Tuple
 import pyvisa
+
+from ._mock.pfeiffer_vacuum import PyvisaDummy
 
 CTRL_CHAR = {
     'ETX': chr(3), # end of text / clear input buffer
@@ -58,12 +61,16 @@ class TPG362:
     of pfeiffer.
     """
 
-    def __init__(self, port='/dev/ttyUSB0'):
+    def __init__(self, port: str='/dev/ttyUSB0'):
+        """
+        Arguments:
+            port -- address of device, e.g. /dev/ttyUSB0
+         """
         self.addr = 'ASRL'+port+'::INSTR'
         #self.addr = 'TCPIP0::10.0.0.110::5025::SOCKET'
         self._device = None
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Connect to device."""
         self._device = pyvisa.ResourceManager().open_resource(
             self.addr,
@@ -78,37 +85,45 @@ class TPG362:
             read_termination='\r\n',
         )
 
-    def close(self):
+    def close(self) -> None:
         """Close connection to device."""
         if self._device is not None:
             self._device.close()
 
-    def _send_command(self, cmd: str):
+    def write(self, cmd: str) -> None:
+        """ Write command to device and check if command
+        is valid. """
         recv = self._device.query(cmd)
         if recv ==  CTRL_CHAR['NAK']:
             message = 'Serial communication returned negative acknowledge'
             raise IOError(message)
         if recv != CTRL_CHAR['ACK']:
             message = f'Serial communication returned unknown response: {recv}'
-    def _get_data(self):
+            raise IOError(message)
+
+    def _get_data(self) -> str:
+        """ Request for data transmission. """
         data = self._device.query(CTRL_CHAR['ENQ'])
         return data
 
-    def _query(self, cmd: str):
-        self._send_command(cmd)
+    def query(self, cmd: str) -> str:
+        """ Query device and clear output buffer. """
+        self.write(cmd)
         data = self._get_data()
         _ = self._clear_output_buffer()
         return data
 
-    def _clear_output_buffer(self):
+    def _clear_output_buffer(self) -> str:
         """Clear the output buffer"""
         time.sleep(0.1)
         just_read = self._device.read()
         return just_read
 
-    def idn(self):
+    @property
+    def idn(self) -> dict:
+        """ Device identification. """
         cmd = 'AYT'
-        response = self._query(cmd).split(',')
+        response = self.query(cmd).split(',')
         result = {
             'Type': response[0],
             'Model No.': response[1],
@@ -119,35 +134,39 @@ class TPG362:
         return result
 
 
-    def error_status(self):
+    def get_error_status(self) -> Tuple[str, str]:
         """
         Returns error status
+        (hex error code, Error message)
         """
         cmd = 'ERR'
-        response = self._query(cmd)
+        response = self.query(cmd)
         return response, ERRORS[response]
 
-    def pressure_gauge(self, gauge: int):
+    def get_gauge_pressure(self, gauge: int) -> Tuple[float, tuple]:
         """Returns pressure and measurement status for gauge X.
 
         Arg:
-        gauge -- int, 1 or 2
+            gauge -- int, 1 or 2
+
+        Return:
+            (pressure, (status code [int], status message [str]))
         """
         if gauge not in [1, 2]:
             message = 'The input gauge number can only be 1 or 2'
             raise ValueError(message)
 
         cmd = 'PR'+ str(gauge)
-        response = self._query(cmd).split(',')
+        response = self.query(cmd).split(',')
         status_code = int(response[0])
         value = float(response[1])
         return value, (status_code, MEASUREMENT_STATUS[status_code])
 
-    def pressure_gauges(self):
+    def get_pressure_all(self) -> Tuple[tuple, tuple]:
         """Returns tuple with pressure and measurement status
         for the two gauges."""
         cmd = 'PRX'
-        response = self._query(cmd).split(',')
+        response = self.query(cmd).split(',')
         # The reply is on the form: x,sx.xxxxEsxx,y,sy.yyyyEsyy
         status_code1 = int(response[0])
         value1 = float(response[1])
@@ -156,69 +175,33 @@ class TPG362:
         return (value1, (status_code1, MEASUREMENT_STATUS[status_code1]),
                 value2, (status_code2, MEASUREMENT_STATUS[status_code2]))
 
-    def pressure_unit(self) -> str:
+    def get_pressure_unit(self) -> str:
         """Return the pressure unit"""
         cmd = 'UNI'
-        unit_code = int(self._query(cmd))
+        unit_code = int(self.query(cmd))
         return PRESSURE_UNITS[unit_code]
 
+    @property
     def pressure_val_gauge1(self) -> float:
         """Returns pressure value of gauge one."""
-        return self.pressure_gauge(1)[0]
+        return self.get_gauge_pressure(1)[0]
 
+    @property
     def pressure_val_gauge2(self) -> float:
         """Returns pressure value of gauge two."""
-        return self.pressure_gauge(2)[0]
+        return self.get_gauge_pressure(2)[0]
 
+    @property
     def temperature(self) -> int:
-        """Returns inner temperature of the Dual Gauge controller
+        """Returns inner temperature of the Dual Gauge controller.
         Unit is degrees celcius. Error is +-2 deg."""
         cmd = 'TMP'
-        response = self._query(cmd)
+        response = self.query(cmd)
         return int(response)
 
-class TPG362Dummy:
-    """For testing purpose. No devices needed."""
-    def __init__(self, port=None):
-        pass
+class TPG362Dummy(TPG362):
+    """ Dummy class for the TPG362 device. """
 
-    def initialize(self):
-        pass
-
-    def close(self):
-        pass
-
-    def idn(self):
-        response = '-1'
-        result = {
-            'Type': response,
-            'Model No.': response,
-            'Serial No.': response,
-            'Firmware version': response,
-            'Hardware version': response,
-        }
-        return result
-
-    def error_status(self):
-        error = '0000'
-        return error, ERRORS[error]
-
-    def pressure_gauge(self, gauge: int):
-        status_code = int(0)
-        value = float(1)
-        return value, (status_code, MEASUREMENT_STATUS[status_code])
-
-    def pressure_gauges(self):
-        return (self.pressure_gauge(1), self.pressure_gauge(2))
-
-    def pressure_unit(self):
-        return PRESSURE_UNITS[0]
-
-    def pressure_val_gauge1(self) -> float:
-        return self.pressure_gauge(1)
-
-    def pressure_val_gauge2(self) -> float:
-        return self.pressure_gauge(2)
-
-    def temperature(self) -> int:
-        return 20
+    def initialize(self) -> None:
+        """ Initialize dummy device """
+        self._device = PyvisaDummy()

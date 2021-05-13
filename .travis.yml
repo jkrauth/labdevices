@@ -1,11 +1,12 @@
 language: python
 python:
-  - 3.8
+  - 3.7
 install:
   - pip install pylint
-  - pip install .
+  - pip install git+git://github.com/nelsond/prologix-gpib-ethernet.git
+  - pip install -r requirements.txt
 script:
-  - pylint --fail-under=8.90 labdevices
-
-
-
+  - pylint --fail-under=9.80 labdevices
+  - pylint --fail-under=9.80 --disable missing-docstring tests
+  - python -m unittest discover tests -k Dummy
+  - python -m unittest tests.test_interface
