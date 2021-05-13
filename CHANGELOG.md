@@ -1,3 +1,7 @@
+## v0.10.1
+
+- include mock classes in PyPI installation files.
+
 ## v0.10.0
 
 - implement a general device interface with a set of basic methods that has to apply for each device and that is tested among the package
@@ -8,10 +12,10 @@
 
 # v0.9.0
 
-- added Local Oscillator from Kuhne Electronic
-- included missing dependency for the newport stage
-- connection to allied vision was fully moved to initialize method, like in all other devices. 
-- added more type hints and small refactoring
+- add Local Oscillator from Kuhne Electronic
+- include missing dependency for the newport stage
+- connection to allied vision is fully moved to initialize method, like in all other devices. 
+- add more type hints and small refactoring
 
 # v0.8.4
 
