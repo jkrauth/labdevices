@@ -1,4 +1,4 @@
-""" Unittests for the Keysight devices """
+""" Unittests for the Allied Vision devices """
 import unittest
 import numpy as np
 
@@ -75,7 +75,7 @@ class MantaTest(unittest.TestCase):
 
 
 class MantaDummyTest(MantaTest):
-    """ For testing the Keysight Counter class with a dummy. """
+    """ For testing the Allied Vision Manta class with a dummy. """
     def setUp(self) -> None:
         addr = 'DEV_000F314E6DE1'
         self.device = allied_vision.MantaDummy(addr)
