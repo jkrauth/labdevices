@@ -1,3 +1,9 @@
+# CHANGELOG
+
+## v0.10.2
+
+- fix Allied Vision dummy camera only accepts a single specific ID
+
 ## v0.10.1
 
 - include mock classes in PyPI installation files.
@@ -14,7 +20,7 @@
 
 - add Local Oscillator from Kuhne Electronic
 - include missing dependency for the newport stage
-- connection to allied vision is fully moved to initialize method, like in all other devices. 
+- connection to allied vision is fully moved to initialize method, like in all other devices.
 - add more type hints and small refactoring
 
 # v0.8.4

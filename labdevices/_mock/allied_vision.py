@@ -37,17 +37,17 @@ class VimbaDummy(Mock):
         return ['camera1', 'camera2', 'DEV_000F314E6DE1']
 
     @staticmethod
-    def camera(idn: str):
+    def camera(index: int):
         """ Return the mock camera object """
-        return CameraDummy(idn)
+        _ = index
+        return CameraDummy()
 
 
 class CameraDummy(Mock):
     """ Mock class for the Allied Vision camera """
 
-    def __init__(self, device_index):
+    def __init__(self):
         """ Create the attributes for the camera with their values. """
-        _ = device_index
         super().__init__()
 
         for item, val in CAMERA_ATTRIBUTES.items():

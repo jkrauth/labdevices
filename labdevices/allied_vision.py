@@ -247,7 +247,28 @@ class Manta:
 
 class MantaDummy(Manta):
     """Manta class for testing. It doesn't need any device connected."""
+
     def __init__(self, device_id: str):
-        """ Replace the real pymba package with a Mock version. """
-        super().__init__(device_id)
+        """
+        Arguments:
+        camera_id -- str, usually in a format like 'DEV_000F314E1E59'
+        """
+        # Start the camera package
         self.vimba = VimbaDummy()
+
+        # Find correct camera index
+        self.device_id = device_id
+
+        # This will become the camera.
+        self._device = None
+
+    def initialize(self) -> None:
+        """Establish connection to mock camera"""
+
+        self.vimba.startup()
+        # Device index is usually found by finding all attached cameras
+        # and comparing camera IDs.
+        device_index = 0
+        self._device = self.vimba.camera(device_index)
+        self._device.open()
+        print(f"Connected to camera : {self.idn}")
